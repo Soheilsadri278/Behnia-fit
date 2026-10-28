@@ -1540,9 +1540,17 @@ textarea {
 /* 13. قیمت‌ها ------------------------------------------------------------ */
 .pricing__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(1rem, 0.5rem + 1.4vw, 1.5rem);
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.8rem, 0.4rem + 1vw, 1.25rem);
   align-items: stretch;
+}
+/* چهار ستون در عرض کم جا نمی‌شود: دو ستون */
+@media (max-width: 1120px) {
+  .pricing__grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 44rem;
+    margin-inline: auto;
+  }
 }
 .plan {
   background: var(--surface);
@@ -1565,28 +1573,35 @@ textarea {
   font-size: 1.15rem;
 }
 .plan__desc {
-  font-size: var(--fs-xs);
+  font-size: 0.81rem;
   color: var(--muted);
-  line-height: 1.8;
-  min-height: 3.2em;
+  line-height: 1.75;
+  min-height: 4.4em;
+  text-wrap: pretty;
 }
 .plan__price {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
-  padding-block: var(--sp-2);
+  flex-wrap: wrap;
+  gap: 0.2rem 0.45rem;
+  padding-block: var(--sp-3);
   border-block: 1px solid var(--line);
+  /* عدد و واحد در کارت‌های باریک زیر هم می‌آیند */
 }
 .plan__price .amount {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(1.9rem, 1.5rem + 1.4vw, 2.5rem);
+  font-size: clamp(1.9rem, 1.4rem + 1.1vw, 2.4rem);
   line-height: 1;
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 .plan__price .unit {
-  font-size: var(--fs-xs);
+  font-size: 0.78rem;
+  line-height: 1.6;
   color: var(--muted);
+  flex: 1 1 100%;
+  margin-inline-start: 0;
 }
 .plan__list {
   display: grid;
@@ -1619,6 +1634,9 @@ textarea {
   border-color: var(--ink);
   color: var(--paper);
   box-shadow: var(--shadow-lg);
+  /* کارت ویژه کمی برجسته‌تر، بدون به‌هم‌خوردن اندازه‌ها */
+  outline: 1px solid rgba(255, 255, 255, 0.06);
+  outline-offset: -1px;
 }
 .plan--featured .plan__name,
 .plan--featured .plan__price .amount {
@@ -2251,10 +2269,13 @@ textarea {
     aspect-ratio: 4 / 3.4;
     border-radius: var(--r-lg) 160px var(--r-lg) var(--r-lg);
   }
+  /* چهار پلن: در تبلت دو ستون می‌ماند تا اسکرول طولانی نشود */
   .pricing__grid {
-    grid-template-columns: 1fr;
-    max-width: 30rem;
-    margin-inline: auto;
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 44rem;
+  }
+  .plan__desc {
+    min-height: 0;
   }
   .plan--featured {
     order: -1;
@@ -2280,6 +2301,11 @@ textarea {
   }
   .header__cta {
     display: none;
+  }
+  .pricing__grid {
+    grid-template-columns: 1fr;
+    max-width: 30rem;
+    margin-inline: auto;
   }
 }
 
