@@ -1,0 +1,24 @@
+.legal { padding-block: clamp(2rem, 1.5rem + 4vw, 4.5rem); }
+    .legal__head { max-width: 46rem; margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem); }
+    .legal__head h1 { font-size: clamp(1.9rem, 1.4rem + 2.4vw, 3rem); margin-bottom: 1rem; }
+    .legal__body { max-width: 46rem; display: grid; gap: 1.75rem; }
+    .legal__body h2 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+    .legal__body p { color: var(--muted); line-height: 2; font-size: 0.98rem; }
+    .legal__body ul { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+    .legal__body li { font-size: 0.95rem; color: var(--muted); line-height: 1.9; padding-inline-start: 1.1rem; position: relative; }
+    .legal__body li::before { content: "—"; position: absolute; inset-inline-start: 0; color: var(--line-strong); }
+    .legal__body a { color: var(--brand); border-bottom: 1px solid var(--line-strong); }
+    .legal__body a:hover { border-color: var(--brand); }
+    .legal__box { border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: 1.1rem 1.25rem; background: rgba(255,255,255,0.55); font-size: 0.9rem; color: var(--ink-soft); line-height: 1.95; }
+    .legal__box strong { display: block; margin-bottom: 0.35rem; }
+    .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 600; color: var(--brand); }
+    .back-link svg { width: 1em; height: 1em; transform: rotate(180deg); }
+    .legal__contact { display: grid; gap: 0.4rem; font-size: 0.95rem; color: var(--ink-soft); }
+    .legal__contact a { color: var(--ink-soft); border-bottom: 1px solid var(--line-strong); width: fit-content; }
+    .toc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 1.1rem 1.35rem; }
+    .toc p { font-weight: 700; color: var(--ink); margin-bottom: 0.6rem; font-size: 0.9rem; }
+    .toc ol { display: grid; gap: 0.3rem; margin: 0; padding: 0; list-style: none; counter-reset: t; }
+    .toc li { font-size: 0.9rem; counter-increment: t; }
+    .toc li a { border-bottom: 0; color: var(--ink-soft); }
+    .toc li a::before { content: counter(t, persian) ". "; color: var(--muted-2); }
+    .toc li a:hover { color: var(--brand); }
