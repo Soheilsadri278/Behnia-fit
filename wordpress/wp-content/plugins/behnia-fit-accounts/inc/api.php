@@ -893,26 +893,60 @@ final class BF_Accounts_API {
 		global $wpdb;
 
 		$stored_name = basename( $stored_name );
-		$files       = bf_table( 'program_files' );
-		$row         = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$files} WHERE stored_name = %s", $stored_name ), ARRAY_A ); // phpcs:ignore
-		if ( ! $row ) {
+		$path        = trailingslashit( bf_store_dir() ) . $stored_name;
+
+		// ۱) پیوست برنامه — نام اصلی و نوعش را از جدول فایل‌ها می‌دانیم.
+		$files = bf_table( 'program_files' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$files} WHERE stored_name = %s", $stored_name ), ARRAY_A ); // phpcs:ignore
+
+		if ( $row ) {
+			$program = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . bf_table( 'programs' ) . ' WHERE id = %d', (int) $row['program_id'] ), ARRAY_A ); // phpcs:ignore
+			if ( ! $program || ( ! $is_coach && (int) $program['user_id'] !== (int) $user_id ) ) {
+				self::fail( 403, 'به این فایل دسترسی نداری' );
+			}
+			if ( ! is_file( $path ) ) {
+				self::fail( 404, 'فایل روی سرور نیست' );
+			}
+
+			self::stream( $path, $row['mime'], $row['original_name'], 'attachment' );
+		}
+
+		// ۲) رسید کارت‌به‌کارت — روی خود سفارش ذخیره می‌شود، نه در جدول فایل‌های برنامه.
+		$orders  = bf_table( 'orders' );
+		$order   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders} WHERE receipt_file = %s", $stored_name ), ARRAY_A ); // phpcs:ignore
+		if ( ! $order ) {
 			self::fail( 404, 'فایل پیدا نشد' );
 		}
-
-		$program = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . bf_table( 'programs' ) . ' WHERE id = %d', (int) $row['program_id'] ), ARRAY_A ); // phpcs:ignore
-		if ( ! $program || ( ! $is_coach && (int) $program['user_id'] !== (int) $user_id ) ) {
+		if ( ! $is_coach && (int) $order['user_id'] !== (int) $user_id ) {
 			self::fail( 403, 'به این فایل دسترسی نداری' );
 		}
-
-		$path = trailingslashit( bf_store_dir() ) . $stored_name;
 		if ( ! is_file( $path ) ) {
 			self::fail( 404, 'فایل روی سرور نیست' );
 		}
 
+		$ext  = strtolower( pathinfo( $stored_name, PATHINFO_EXTENSION ) );
+		$mime = array_search( $ext, bf_allowed_types(), true );
+		self::stream(
+			$path,
+			$mime ? $mime : 'application/octet-stream',
+			'رسید-سفارش-' . (int) $order['id'] . '.' . $ext,
+			'inline' // «دیدن رسید» باید تصویر را نشان بدهد، نه اینکه دانلودش کند
+		);
+	}
+
+	/**
+	 * فرستادن فایل به مرورگر و پایان درخواست.
+	 *
+	 * @param string $path        مسیر کامل فایل.
+	 * @param string $mime        نوع محتوا.
+	 * @param string $name        نامی که مرورگر می‌بیند.
+	 * @param string $disposition attachment یا inline.
+	 */
+	private static function stream( $path, $mime, $name, $disposition ) {
 		nocache_headers();
-		header( 'Content-Type: ' . ( $row['mime'] ? $row['mime'] : 'application/octet-stream' ) );
+		header( 'Content-Type: ' . ( $mime ? $mime : 'application/octet-stream' ) );
 		header( 'Content-Length: ' . filesize( $path ) );
-		header( "Content-Disposition: attachment; filename*=UTF-8''" . rawurlencode( $row['original_name'] ? $row['original_name'] : 'file' ) );
+		header( 'Content-Disposition: ' . $disposition . "; filename*=UTF-8''" . rawurlencode( $name ? $name : 'file' ) );
 		header( 'Cache-Control: private, no-store' );
 		header( 'X-Content-Type-Options: nosniff' );
 		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions
