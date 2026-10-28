@@ -16,5 +16,3 @@ data/
 *.db-wal
 *.db-shm
 
-# خروجی ساخت قالب وردپرس — به‌صورت فایل جدا در Releases منتشر می‌شود
-wordpress/*.zip

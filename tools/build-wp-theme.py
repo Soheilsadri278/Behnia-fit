@@ -12,6 +12,7 @@ import io
 import os
 import re
 import shutil
+import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 THEME = os.path.join(ROOT, "wordpress", "wp-content", "themes", "behnia-fit")
@@ -266,6 +267,31 @@ def build_privacy():
     return styles, inner
 
 
+
+# --------------------------------------------------------------------- زیپ
+
+ZIP_PATH = os.path.join(ROOT, "wordpress", "behnia-fit-theme.zip")
+
+
+def build_zip():
+    """زیپ آمادهٔ نصب — پوشهٔ behnia-fit در ریشه، دقیقاً همان چیزی که
+    «بارگذاری پوسته» وردپرس انتظار دارد.
+
+    هر بار قالب بازسازی می‌شود این فایل هم از نو ساخته می‌شود تا هیچ‌وقت
+    از سورس عقب نماند.
+    """
+    if os.path.exists(ZIP_PATH):
+        os.remove(ZIP_PATH)
+
+    with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for base, _dirs, files in os.walk(THEME):
+            for name in sorted(files):
+                full = os.path.join(base, name)
+                rel = os.path.relpath(full, os.path.dirname(THEME))
+                z.write(full, rel.replace(os.sep, "/"))
+
+    return ZIP_PATH
+
 # -------------------------------------------------------------------- 404
 
 def build_page_php():
@@ -329,6 +355,9 @@ def main():
     print("  خطوط <main> منتقل‌شده:", n)
     print("  استایل درون‌خطی privacy:", len(styles), "بلوک")
     print("  محتوای privacy:", len(inner), "کاراکتر")
+    zp = build_zip()
+    size = os.path.getsize(zp) / 1024.0
+    print("  زیپ آمادهٔ نصب: %s (%.0f کیلوبایت)" % (zp, size))
 
 
 if __name__ == "__main__":
