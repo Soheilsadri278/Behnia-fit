@@ -960,6 +960,93 @@ textarea {
   }
 }
 
+/* 07b. نوار اعتبارنامه‌ها ------------------------------------------------- */
+.authority {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-soft) 100%);
+}
+.authority__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.authority__item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1.5rem 1.1rem;
+  position: relative;
+}
+.authority__item + .authority__item::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 24%;
+  bottom: 24%;
+  width: 1px;
+  background: var(--line);
+}
+.authority__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--sand);
+  color: var(--forest-deep);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.authority__icon svg {
+  width: 21px;
+  height: 21px;
+}
+.authority__text {
+  display: grid;
+  line-height: 1.45;
+  min-width: 0;
+}
+.authority__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.authority__sub {
+  font-size: 0.73rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 940px) {
+  .authority__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .authority__item {
+    padding: 1.25rem 0.9rem;
+  }
+  .authority__item:nth-child(3),
+  .authority__item:nth-child(4) {
+    border-top: 1px solid var(--line);
+  }
+  .authority__item:nth-child(3)::before {
+    display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .authority__grid {
+    grid-template-columns: 1fr;
+  }
+  .authority__item + .authority__item {
+    border-top: 1px solid var(--line);
+  }
+  .authority__item + .authority__item::before {
+    display: none;
+  }
+  .authority__item {
+    padding: 0.95rem 0;
+  }
+}
+
 /* 08. مخاطب --------------------------------------------------------------- */
 .audience__grid {
   display: grid;
@@ -2186,8 +2273,14 @@ textarea {
   .hero__actions .btn {
     width: 100%;
   }
+  /* در موبایل زیر ۵۲۰px: یک فاکتور در هر خط تا شکستن وسط عبارت پیش نیاید */
   .hero__facts {
-    gap: 0.6rem 1rem;
+    display: grid;
+    gap: 0.55rem;
+    padding-top: var(--sp-4);
+  }
+  .hero__fact {
+    font-size: 0.82rem;
   }
   .hero__card {
     padding: 0.7rem 0.85rem;
