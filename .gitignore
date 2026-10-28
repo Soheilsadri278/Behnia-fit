@@ -1,0 +1,10 @@
+# سیستم و ویرایشگر
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# وابستگی‌ها و خروجی بیلد (این پروژه build ندارد)
+node_modules/
+dist/
