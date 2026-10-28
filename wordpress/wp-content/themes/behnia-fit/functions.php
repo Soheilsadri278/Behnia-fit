@@ -117,16 +117,6 @@ function bf_assets() {
 		bf_file_version( $dir . '/assets/css/style.css' )
 	);
 
-	// استایل صفحه‌های حساب کاربری — فقط وقتی آن افزونه واقعاً فعال است
-	if ( class_exists( 'BF_Accounts' ) && file_exists( $dir . '/assets/css/app.css' ) ) {
-		wp_enqueue_style(
-			'bf-app',
-			BF_THEME_URI . '/assets/css/app.css',
-			array( 'bf-main' ),
-			bf_file_version( $dir . '/assets/css/app.css' )
-		);
-	}
-
 	// استایل صفحهٔ حقوقی، درست بعد از CSS اصلی تا ترتیب آبشاری حفظ شود
 	if ( is_page() && ! is_front_page() && file_exists( $dir . '/inc/legal.css' ) ) {
 		$legal = file_get_contents( $dir . '/inc/legal.css' ); // phpcs:ignore

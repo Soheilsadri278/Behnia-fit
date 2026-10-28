@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>پنل مربی | بهنیا فیت</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#f7f4ee" />
+  <link rel="icon" type="image/png" sizes="64x64" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/img/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/img/apple-touch-icon.png" />
+
+  <link rel="preload" as="font" type="font/woff2" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/fonts/vazirmatn-arabic-400.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/fonts/estedad-arabic-800.woff2" crossorigin />
+
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;background:#f7f4ee;color:#14150f;
+      font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;font-size:1.0625rem;line-height:1.85}
+    img{max-width:100%}svg{width:1em;height:1em;flex:none}
+    .container{width:100%;max-width:1180px;margin-inline:auto;padding-inline:clamp(1.15rem,0.4rem+3vw,2.75rem)}
+    .appbar{background:rgba(247,244,238,.92);border-bottom:1px solid #e3dbcd}
+  </style>
+  <link rel="stylesheet" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/css/style.css?v=10" />
+  <link rel="stylesheet" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/css/app.css?v=4" />
+</head>
+<body>
+  <header class="appbar">
+    <div class="container appbar__inner">
+      <a class="appbar__brand" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="بهنیا فیت — صفحهٔ اصلی">
+        <img src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/img/logo-mark.png" alt="" width="90" height="52" />
+        <b>بهنیا فیت</b>
+      </a>
+      <div class="appbar__actions" id="appbarActions"></div>
+    </div>
+  </header>
+
+  <main class="appmain">
+    <div class="container">
+      <div class="apphead">
+        <h1>پنل مربی</h1>
+        <p>سفارش‌ها را تایید کن و برنامهٔ شاگردها را بگذار.</p>
+      </div>
+
+      <div class="stat-row" id="stats"></div>
+
+      <div id="adminNotice" style="margin-bottom:1.5rem"></div>
+
+      <!-- ===== سفارش‌ها ===== -->
+      <section style="margin-bottom:2.5rem">
+        <h2 class="apphead" style="font-size:1.1rem;font-family:var(--font-display);color:var(--brand);margin-bottom:.9rem">
+          سفارش‌ها
+        </h2>
+        <div class="card" id="ordersBox">
+          <div class="loading-line" style="width:60%"></div>
+        </div>
+      </section>
+
+      <!-- ===== ساخت برنامه ===== -->
+      <section style="margin-bottom:2.5rem">
+        <h2 class="apphead" style="font-size:1.1rem;font-family:var(--font-display);color:var(--brand);margin-bottom:.9rem">
+          ساخت برنامهٔ جدید
+        </h2>
+        <div class="card">
+          <form id="builderForm" novalidate>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem" class="builder-top">
+              <label class="field" style="margin:0">
+                <span class="field__label">شاگرد</span>
+                <select class="select" id="bStudent"></select>
+              </label>
+              <label class="field" style="margin:0">
+                <span class="field__label">در پی سفارش (اختیاری)</span>
+                <select class="select" id="bOrder"><option value="">— بدون سفارش —</option></select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="field__label">عنوان برنامه</span>
+              <input class="input" id="bTitle" type="text" placeholder="مثلاً برنامهٔ حجم — دورهٔ اول" />
+              <span class="field__error" id="bTitle-error"></span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">توضیح کوتاه (اختیاری)</span>
+              <input class="input" id="bSummary" type="text" placeholder="۴ روز در هفته، تمرکز روی بالاتنه" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">تاریخ شروع (اختیاری)</span>
+              <input class="input" id="bStart" type="text" placeholder="۱۴۰۵/۰۸/۱۰" dir="ltr" />
+            </label>
+
+            <div id="daysBox" style="margin-top:1.25rem"></div>
+            <button class="btn btn--ghost btn--small" type="button" id="addDay" style="margin-top:.75rem">
+              + افزودن روز
+            </button>
+
+            <div style="margin-top:1.5rem">
+              <span class="field__label">فایل پیوست (PDF یا عکس)</span>
+              <label class="file-drop" for="bFiles" id="fileDrop">
+                انتخاب فایل — یا فایل‌ها را همین‌جا رها کن
+                <input type="file" id="bFiles" accept=".pdf,image/jpeg,image/png,image/webp" multiple hidden />
+              </label>
+              <p class="field__hint" id="filesName"></p>
+            </div>
+
+            <div id="builderError" style="margin-top:1rem"></div>
+
+            <button class="btn btn--accent" type="submit" id="bSubmit" style="margin-top:1.5rem">
+              ثبت برنامه برای شاگرد
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===== شاگردها ===== -->
+      <section>
+        <h2 class="apphead" style="font-size:1.1rem;font-family:var(--font-display);color:var(--brand);margin-bottom:.9rem">
+          شاگردها
+        </h2>
+        <div class="card" id="studentsBox">
+          <div class="loading-line" style="width:50%"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/js/app.js?v=1"></script>
+  <script src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/js/admin.js?v=1"></script>
+</body>
+</html>

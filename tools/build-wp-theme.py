@@ -16,6 +16,8 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 THEME = os.path.join(ROOT, "wordpress", "wp-content", "themes", "behnia-fit")
+PLUGIN = os.path.join(ROOT, "wordpress", "wp-content", "plugins", "behnia-fit-accounts")
+PLUGIN_URI = "<?php echo esc_url( BF_ACCOUNTS_URI ); ?>"
 
 ASSET = '<?php echo esc_url( BF_THEME_URI ); ?>'
 
@@ -23,6 +25,15 @@ ASSET = '<?php echo esc_url( BF_THEME_URI ); ?>'
 def read(name):
     with io.open(os.path.join(ROOT, name), encoding="utf-8") as f:
         return f.read()
+
+
+def write_to(base_dir, rel, text):
+    path = os.path.join(base_dir, rel)
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with io.open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
 
 
 def write(rel, text):
@@ -292,6 +303,91 @@ def build_zip():
 
     return ZIP_PATH
 
+
+# ------------------------------------------------- افزونهٔ حساب کاربری
+
+# دارایی‌هایی که قالب برای صفحه‌های حساب لازم دارد. افزونه نسخهٔ خودش را
+# دارد تا مستقل از قالب کار کند؛ این‌ها فقط کپی می‌شوند.
+PLUGIN_ASSETS = [
+    ("assets/css/style.css", "assets/css/style.css"),
+    ("assets/css/app.css", "assets/css/app.css"),
+    ("assets/js/app.js", "assets/js/app.js"),
+    ("assets/js/account.js", "assets/js/account.js"),
+    ("assets/js/admin.js", "assets/js/admin.js"),
+    ("assets/img/favicon.png", "assets/img/favicon.png"),
+    ("assets/img/apple-touch-icon.png", "assets/img/apple-touch-icon.png"),
+    ("assets/img/logo-mark.png", "assets/img/logo-mark.png"),
+]
+
+
+def plugin_copy_assets():
+    for src_rel, dst_rel in PLUGIN_ASSETS:
+        src = os.path.join(ROOT, src_rel)
+        dst = os.path.join(PLUGIN, dst_rel)
+        parent = os.path.dirname(dst)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        shutil.copyfile(src, dst)
+
+    fonts_src = os.path.join(ROOT, "assets", "fonts")
+    fonts_dst = os.path.join(PLUGIN, "assets", "fonts")
+    if os.path.isdir(fonts_dst):
+        shutil.rmtree(fonts_dst)
+    shutil.copytree(fonts_src, fonts_dst)
+
+
+def localize_account_html(html, page):
+    """لینک‌های نسبی صفحهٔ ایستا به آدرس‌های وردپرس تبدیل می‌شوند.
+
+    ترتیب مهم است: اول assets تا هیچ‌جا از قلم نیفتد.
+    """
+    html = html.replace('href="assets/', 'href="' + PLUGIN_URI + '/assets/')
+    html = html.replace('src="assets/', 'src="' + PLUGIN_URI + '/assets/')
+
+    html = html.replace(
+        'href="index.html"',
+        'href="<?php echo esc_url( home_url( \'/\' ) ); ?>"',
+    )
+    html = html.replace(
+        'href="privacy.html"',
+        'href="<?php echo esc_url( bf_accounts_privacy_url() ); ?>"',
+    )
+
+    if page == "account":
+        # شمارهٔ کارت را از تنظیمات می‌خوانیم و به همان اسکریپت کوچک می‌دهیم.
+        snippet = (
+            "  <script>window.BF_CARD = <?php echo wp_json_encode( (string) apply_filters( 'bf_card_number', '' ) ); ?>;</script>\n"
+            '  <script src="' + PLUGIN_URI + '/assets/js/card-note.js"></script>\n'
+        )
+        html = html.replace("</body>", snippet + "\n</body>")
+
+    return html
+
+
+def build_plugin():
+    os.makedirs(PLUGIN, exist_ok=True)
+    plugin_copy_assets()
+
+    for page, source in (("login", "login.html"), ("account", "account.html"), ("admin", "admin.html")):
+        html = localize_account_html(read(source), page)
+        write_to(PLUGIN, "templates/" + page + ".php", html)
+
+    return zip_plugin()
+
+
+def zip_plugin():
+    path = os.path.join(ROOT, "wordpress", "behnia-fit-accounts.zip")
+    if os.path.exists(path):
+        os.remove(path)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for base, _dirs, files in os.walk(PLUGIN):
+            for name in sorted(files):
+                full = os.path.join(base, name)
+                rel = os.path.relpath(full, os.path.dirname(PLUGIN))
+                z.write(full, rel.replace(os.sep, "/"))
+    return path
+
+
 # -------------------------------------------------------------------- 404
 
 def build_page_php():
@@ -355,6 +451,8 @@ def main():
     print("  خطوط <main> منتقل‌شده:", n)
     print("  استایل درون‌خطی privacy:", len(styles), "بلوک")
     print("  محتوای privacy:", len(inner), "کاراکتر")
+    pz = build_plugin()
+    print("  افزونه: %s (%.0f کیلوبایت)" % (pz, os.path.getsize(pz) / 1024.0))
     zp = build_zip()
     size = os.path.getsize(zp) / 1024.0
     print("  زیپ آمادهٔ نصب: %s (%.0f کیلوبایت)" % (zp, size))
