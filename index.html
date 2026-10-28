@@ -93,7 +93,7 @@
     }
   </style>
 
-  <link rel="stylesheet" href="assets/css/style.css?v=8" />
+  <link rel="stylesheet" href="assets/css/style.css?v=9" />
   <!-- خودترمیم: اگر استایل اعمال نشده باشد (کش قدیمی یا خطای شبکه)،
        یک‌بار با پارامتر تازه دوباره بارگذاری می‌کند. -->
   <script>
@@ -298,22 +298,30 @@
     <!-- ===== نوار متحرک ===== -->
     <div class="ticker" aria-hidden="true">
       <div class="ticker__track">
-        <span class="ticker__item">تمرین مقاومتی</span>
-        <span class="ticker__item">اصلاح فرم</span>
-        <span class="ticker__item">برنامهٔ اختصاصی</span>
-        <span class="ticker__item">تغذیهٔ ساده</span>
-        <span class="ticker__item">پیگیری هفتگی</span>
-        <span class="ticker__item">حضوری در کرج · مهرشهر</span>
-        <span class="ticker__item">کوچینگ آنلاین</span>
-        <span class="ticker__item">فیزیولوژی کاربردی</span>
-        <span class="ticker__item">قهرمان فیتنس</span>
-        <span class="ticker__item">تمرین مقاومتی</span>
-        <span class="ticker__item">اصلاح فرم</span>
-        <span class="ticker__item">برنامهٔ اختصاصی</span>
-        <span class="ticker__item">تغذیهٔ ساده</span>
-        <span class="ticker__item">پیگیری هفتگی</span>
-        <span class="ticker__item">کارشناسی ارشد فیزیولوژی کاربردی</span>
-        <span class="ticker__item">کوچینگ آنلاین</span>
+        <div class="ticker__group">
+          <span class="ticker__item">تمرین مقاومتی</span>
+          <span class="ticker__item">اصلاح فرم</span>
+          <span class="ticker__item">برنامهٔ اختصاصی</span>
+          <span class="ticker__item">تغذیهٔ ساده</span>
+          <span class="ticker__item">پیگیری هفتگی</span>
+          <span class="ticker__item">حضوری در کرج · مهرشهر</span>
+          <span class="ticker__item">کوچینگ آنلاین</span>
+          <span class="ticker__item">کارشناسی ارشد فیزیولوژی کاربردی</span>
+          <span class="ticker__item">قهرمان فیتنس</span>
+        </div>
+        <!-- یک نسخهٔ ایستا هم می‌گذاریم تا بدون جاوااسکریپت هم حلقه بی‌پرش باشد.
+             جاوااسکریپت این را حذف و بر اساس عرض واقعی صفحه بازسازی می‌کند. -->
+        <div class="ticker__group" aria-hidden="true">
+          <span class="ticker__item">تمرین مقاومتی</span>
+          <span class="ticker__item">اصلاح فرم</span>
+          <span class="ticker__item">برنامهٔ اختصاصی</span>
+          <span class="ticker__item">تغذیهٔ ساده</span>
+          <span class="ticker__item">پیگیری هفتگی</span>
+          <span class="ticker__item">حضوری در کرج · مهرشهر</span>
+          <span class="ticker__item">کوچینگ آنلاین</span>
+          <span class="ticker__item">کارشناسی ارشد فیزیولوژی کاربردی</span>
+          <span class="ticker__item">قهرمان فیتنس</span>
+        </div>
       </div>
     </div>
 
@@ -1162,6 +1170,6 @@
     <svg aria-hidden="true"><use href="#i-up"></use></svg>
   </button>
 
-  <script src="assets/js/main.js?v=8" defer></script>
+  <script src="assets/js/main.js?v=9" defer></script>
 </body>
 </html>

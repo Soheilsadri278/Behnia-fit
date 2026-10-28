@@ -88,6 +88,69 @@
     });
   }
 
+  /* ---------- نوار متحرک ----------
+     مسئله: انیمیشن ‎-50%‎ فقط وقتی بی‌درز است که دو نیمهٔ نوار دقیقاً یکسان و
+     هر نیمه از عرض صفحه پهن‌تر باشند؛ وگرنه سمت راست نوار خالی می‌ماند.
+     راه‌حل: یک گروه مرجع می‌گیریم، آیتم‌ها را تا رسیدن به عرض لازم تکرار
+     می‌کنیم و بعد همان گروه را عیناً کپی می‌کنیم.
+     ------------------------------------------------------------------- */
+  var ticker = $(".ticker");
+  var tickerTrack = $(".ticker__track");
+  var tickerGroup = $(".ticker__group");
+  var tickerBase = null;
+  var tickerTimer = null;
+
+  function buildTicker() {
+    if (!ticker || !tickerTrack || !tickerGroup) return;
+
+    // نسخهٔ اصلی آیتم‌ها را فقط یک‌بار نگه می‌داریم
+    if (!tickerBase) {
+      tickerBase = $$(".ticker__item", tickerGroup).map(function (el) {
+        return el.cloneNode(true);
+      });
+    }
+    if (!tickerBase.length) return;
+
+    // پاک‌سازی گروه‌های قبلی
+    var groups = $$(".ticker__group", tickerTrack);
+    groups.forEach(function (g, i) {
+      if (i > 0) g.parentNode.removeChild(g);
+    });
+    while (tickerGroup.firstChild) {
+      tickerGroup.removeChild(tickerGroup.firstChild);
+    }
+
+    // عرضی که باید پوشش داده شود: دست‌کم عرض نوار × ۱٫۲ (حاشیهٔ اطمینان)
+    var need = Math.max(ticker.clientWidth, window.innerWidth) * 1.2 + 160;
+    var guard = 0;
+    do {
+      tickerBase.forEach(function (el) {
+        tickerGroup.appendChild(el.cloneNode(true));
+      });
+      guard++;
+    } while (tickerGroup.getBoundingClientRect().width < need && guard < 20);
+
+    // گروه دوم، دقیقاً یکسان با اولی
+    var twin = tickerGroup.cloneNode(true);
+    twin.setAttribute("aria-hidden", "true");
+    tickerTrack.appendChild(twin);
+
+    // سرعت ثابت (~۷۰ پیکسل بر ثانیه) مستقل از عرض صفحه
+    var groupWidth = tickerGroup.getBoundingClientRect().width;
+    tickerTrack.style.animationDuration = Math.max(16, Math.round(groupWidth / 70)) + "s";
+    ticker.classList.add("is-ready");
+  }
+
+  buildTicker();
+  window.addEventListener("load", buildTicker);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(buildTicker).catch(function () {});
+  }
+  window.addEventListener("resize", function () {
+    window.clearTimeout(tickerTimer);
+    tickerTimer = window.setTimeout(buildTicker, 180);
+  });
+
   /* ---------- هایلایت لینک فعال منو ---------- */
   var navLinks = $$(".nav__link");
   var sections = navLinks

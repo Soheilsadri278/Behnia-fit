@@ -929,16 +929,27 @@ textarea {
   display: flex;
   align-items: center;
   border-block: 1px solid rgba(255, 255, 255, 0.08);
+  /* حیاتی: در صفحهٔ RTL، فلکس محتوا را از راست می‌چیند و انیمیشن ‎-50%‎
+     سمت راست نوار را خالی می‌کند. با ltr، نوار از چپ شروع می‌شود. */
+  direction: ltr;
 }
 .ticker__track {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
   direction: ltr;
   flex: none;
-  min-width: max-content;
+  width: max-content;
+  animation: ticker linear infinite;
+  animation-duration: 40s; /* JS بر اساس عرض واقعی بازنویسی می‌کند */
+  will-change: transform;
+}
+/* هر گروه یک نسخهٔ کامل و یکسان از محتواست؛ ‎-50%‎ دقیقاً به اندازهٔ یک گروه است */
+.ticker__group {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  flex: none;
   padding-inline-end: 2.5rem;
-  animation: ticker 38s linear infinite;
 }
 .ticker:hover .ticker__track {
   animation-play-state: paused;
