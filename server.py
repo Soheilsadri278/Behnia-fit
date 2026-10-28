@@ -25,7 +25,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PORT = int(os.environ.get("PORT", "8000"))
 HOST = "0.0.0.0"
 
-# پسوندهایی که باید در مرورگر کش شوند (نسخه‌بندی نشده‌اند، پس کوتاه)
+# تصویر و فونت: یک روز کش. CSS/JS پایین‌تر استثنا شده‌اند.
 CACHEABLE = {
     ".css", ".js", ".woff2", ".woff", ".jpg", ".jpeg", ".png",
     ".webp", ".avif", ".svg", ".ico",
@@ -42,7 +42,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
         path = self.path.split("?")[0].split("#")[0].lower()
         ext = os.path.splitext(path)[1]
 
-        if ext in CACHEABLE:
+        # CSS و JS هرگز کش نشوند: اشتباهی که یک‌بار صفحه را بی‌استایل کرد
+        if ext in (".css", ".js"):
+            self.send_header("Cache-Control", "no-store, must-revalidate")
+        elif ext in CACHEABLE:
             self.send_header("Cache-Control", "public, max-age=%d" % ONE_DAY)
         else:
             # HTML و بقیه: همیشه تازه بماند تا تغییرات بلافاصله دیده شود

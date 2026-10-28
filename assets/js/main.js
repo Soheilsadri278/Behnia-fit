@@ -81,7 +81,7 @@
     });
 
     window.addEventListener("resize", function () {
-      if (window.innerWidth > 940) setMenu(false);
+      if (window.innerWidth > 1000) setMenu(false);
     });
   }
 
