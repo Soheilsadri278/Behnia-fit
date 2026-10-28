@@ -10,13 +10,16 @@
 
   /* ---------------------------------------------------------------------
      CONFIG — تنظیمات تماس
-     whatsapp: فقط رقم‌ها، با کد کشور و بدون + و بدون ۰ اضافه
-               نمونهٔ آلمان: 49 + شماره بدون صفر اول  → "4915112345678"
+     phone: فقط رقم‌ها، با کد کشور و بدون + و بدون ۰ اضافه
+            ایران: 98 + شماره بدون صفر اول  → "989361701801"
+     telegram: همان شماره، برای لینک t.me/+...
+     instagram: نام کاربری بدون @
      --------------------------------------------------------------------- */
   var CONFIG = {
-    whatsapp: "490000000000",
-    email: "hallo@behnia-fit.de",
-    instagram: "behnia.fit"
+    phone: "989361701801",
+    whatsapp: "989361701801",
+    telegram: "989361701801",
+    instagram: "behniafit"
   };
 
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -238,14 +241,14 @@
       window.open(url, "_blank", "noopener");
     });
 
-    var emailBtn = $("#emailBtn");
-    if (emailBtn) {
-      emailBtn.addEventListener("click", function () {
+    var tgBtn = $("#telegramBtn");
+    if (tgBtn) {
+      tgBtn.addEventListener("click", function () {
         if (!validate()) return;
-        var subject = encodeURIComponent("درخواست مشاوره از وب‌سایت");
-        var body = encodeURIComponent(buildMessage());
-        window.location.href = "mailto:" + CONFIG.email + "?subject=" + subject + "&body=" + body;
-        showStatus("ok", "برنامهٔ ایمیل باز شد؛ کافی است دکمهٔ ارسال را بزنی.");
+        var text = encodeURIComponent(buildMessage());
+        var url = "https://t.me/+" + CONFIG.telegram + "?text=" + text;
+        showStatus("ok", "پیام آماده شد؛ در تلگرام باز می‌شود. کافی است دکمهٔ ارسال را بزنی.");
+        window.open(url, "_blank", "noopener");
       });
     }
   }
