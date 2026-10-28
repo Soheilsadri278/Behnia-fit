@@ -1,0 +1,52 @@
+name: انتشار روی GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: دریافت کد
+        uses: actions/checkout@v4
+
+      # فقط فایل‌های خود سایت منتشر می‌شوند تا server.py و tools/
+      # و README روی وب‌سایت عمومی قرار نگیرند.
+      - name: آماده‌سازی فایل‌های سایت
+        run: |
+          mkdir -p _site
+          cp index.html privacy.html 404.html .nojekyll _site/
+          cp -r assets _site/
+          echo "تعداد فایل‌های منتشرشده: $(find _site -type f | wc -l)"
+          test -f _site/index.html
+          test -f _site/privacy.html
+          test -f _site/404.html
+          test -f _site/assets/css/style.css
+          test -f _site/assets/js/main.js
+          test -f _site/assets/img/trainer-hero.jpg
+
+      - name: پیکربندی Pages
+        uses: actions/configure-pages@v5
+
+      - name: بارگذاری آرشیو
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: انتشار
+        id: deployment
+        uses: actions/deploy-pages@v4
