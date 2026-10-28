@@ -139,9 +139,10 @@
   --ink-soft: #2c2e25;
   --muted: #6c6d60;
   --muted-2: #8b8c7e;
-  --forest: #2b4234;
-  --forest-deep: #1e3126;
-  --forest-soft: #e5eadd;
+  /* سرمهٔ لوگو — هم‌راستا با #14234B در فایل لوگو */
+  --brand: #14234b;
+  --brand-deep: #0d1936;
+  --brand-soft: #e4e9f4;
   --clay: #b1562f;
   --clay-soft: #f4e6dc;
 
@@ -181,7 +182,7 @@
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --header-h: 76px;
+  --header-h: 82px;
 }
 
 /* 03. ریست و پایه ---------------------------------------------------------- */
@@ -284,7 +285,7 @@ textarea {
 }
 
 ::selection {
-  background: var(--forest);
+  background: var(--brand);
   color: var(--paper-soft);
 }
 
@@ -406,11 +407,11 @@ textarea {
 }
 
 .text-accent {
-  color: var(--forest);
+  color: var(--brand);
 }
 
 .section--ink .text-accent {
-  color: #cfe0bd;
+  color: #bcccee;
 }
 
 .underline-clay {
@@ -467,13 +468,13 @@ textarea {
 }
 
 .btn--accent {
-  --btn-bg: var(--forest);
+  --btn-bg: var(--brand);
   --btn-fg: #f6f8f1;
-  --btn-bd: var(--forest);
+  --btn-bd: var(--brand);
 }
 .btn--accent:hover {
-  --btn-bg: var(--forest-deep);
-  --btn-bd: var(--forest-deep);
+  --btn-bg: var(--brand-deep);
+  --btn-bd: var(--brand-deep);
 }
 
 .btn--ghost {
@@ -508,13 +509,13 @@ textarea {
   gap: 0.45rem;
   font-size: var(--fs-small);
   font-weight: 600;
-  color: var(--forest);
+  color: var(--brand);
   border-bottom: 1px solid transparent;
   padding-bottom: 2px;
   transition: border-color 0.2s var(--ease), gap 0.25s var(--ease-out);
 }
 .link-arrow:hover {
-  border-color: var(--forest);
+  border-color: var(--brand);
   gap: 0.75rem;
 }
 .link-arrow svg {
@@ -529,8 +530,8 @@ textarea {
   gap: 0.4rem;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  background: var(--forest-soft);
-  color: var(--forest-deep);
+  background: var(--brand-soft);
+  color: var(--brand-deep);
   font-size: var(--fs-xs);
   font-weight: 600;
   line-height: 1.4;
@@ -565,24 +566,29 @@ textarea {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.8rem;
   flex: none;
 }
-.brand__mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: var(--ink);
-  display: grid;
-  place-items: center;
-  transition: transform 0.4s var(--ease-out);
+.brand__logo {
+  width: auto;
+  height: 52px;
+  flex: none;
+  transition: transform 0.45s var(--ease-out);
 }
-.brand:hover .brand__mark {
-  transform: rotate(-8deg);
+.brand:hover .brand__logo {
+  transform: scale(1.04);
 }
-.brand__mark svg {
-  width: 21px;
-  height: 21px;
+.brand__lockup {
+  width: clamp(180px, 16vw, 226px);
+  height: auto;
+  display: block;
+}
+.brand--stacked {
+  display: block;
+}
+/* در فوتر، متن‌های برند زیر لاک‌آپ نمی‌آیند */
+.brand--stacked .brand__text {
+  display: none;
 }
 .brand__text {
   display: grid;
@@ -754,8 +760,8 @@ textarea {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #4c7a4a;
-  box-shadow: 0 0 0 4px rgba(76, 122, 74, 0.16);
+  background: #3f7a5c;
+  box-shadow: 0 0 0 4px rgba(63, 122, 92, 0.16);
   margin-inline-start: 0.35rem;
 }
 
@@ -767,7 +773,7 @@ textarea {
 }
 .hero__title em {
   font-style: normal;
-  color: var(--forest);
+  color: var(--brand);
   position: relative;
 }
 .hero__title .line {
@@ -813,7 +819,7 @@ textarea {
 .hero__fact svg {
   width: 15px;
   height: 15px;
-  color: var(--forest);
+  color: var(--brand);
   flex: none;
 }
 
@@ -860,7 +866,7 @@ textarea {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--forest);
+  background: var(--brand);
   color: #eef3e6;
   display: grid;
   place-items: center;
@@ -990,7 +996,7 @@ textarea {
   height: 42px;
   border-radius: 12px;
   background: var(--sand);
-  color: var(--forest-deep);
+  color: var(--brand-deep);
   display: grid;
   place-items: center;
   flex: none;
@@ -1072,8 +1078,8 @@ textarea {
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: var(--forest-soft);
-  color: var(--forest-deep);
+  background: var(--brand-soft);
+  color: var(--brand-deep);
   margin-bottom: var(--sp-4);
 }
 .audience__icon svg {
@@ -1134,7 +1140,7 @@ textarea {
   height: 48px;
   border-radius: 14px;
   background: var(--sand);
-  color: var(--forest-deep);
+  color: var(--brand-deep);
   display: grid;
   place-items: center;
   flex: none;
@@ -1174,7 +1180,7 @@ textarea {
 .service__list svg {
   width: 15px;
   height: 15px;
-  color: var(--forest);
+  color: var(--brand);
   margin-top: 0.45em;
   flex: none;
 }
@@ -1256,8 +1262,8 @@ textarea {
   margin-bottom: var(--sp-3);
 }
 .step--active .step__num {
-  background: var(--forest);
-  border-color: var(--forest);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #f2f6ea;
 }
 .step h3 {
@@ -1450,7 +1456,7 @@ textarea {
 .about__caption svg {
   width: 15px;
   height: 15px;
-  color: var(--forest);
+  color: var(--brand);
 }
 
 .about h2 {
@@ -1517,7 +1523,7 @@ textarea {
 .credential svg {
   width: 17px;
   height: 17px;
-  color: var(--forest);
+  color: var(--brand);
   flex: none;
   margin-top: 0.35em;
 }
@@ -1593,7 +1599,7 @@ textarea {
 .plan__list svg {
   width: 15px;
   height: 15px;
-  color: var(--forest);
+  color: var(--brand);
   flex: none;
   margin-top: 0.4em;
 }
@@ -1626,7 +1632,7 @@ textarea {
   color: #e7e7dd;
 }
 .plan--featured .plan__list svg {
-  color: #b9d39c;
+  color: #aebfe4;
 }
 .plan--featured .badge {
   position: absolute;
@@ -1662,7 +1668,7 @@ textarea {
 .pricing__note svg {
   width: 17px;
   height: 17px;
-  color: var(--forest);
+  color: var(--brand);
   flex: none;
   margin-top: 0.3em;
 }
@@ -1695,7 +1701,7 @@ textarea {
   transition: color 0.2s var(--ease);
 }
 .faq__q:hover {
-  color: var(--forest);
+  color: var(--brand);
 }
 .faq__icon {
   width: 30px;
@@ -1714,8 +1720,8 @@ textarea {
   transition: transform 0.35s var(--ease-out);
 }
 .faq__item.is-open .faq__icon {
-  background: var(--forest);
-  border-color: var(--forest);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #eef3e6;
 }
 .faq__item.is-open .faq__icon svg {
@@ -1766,7 +1772,7 @@ textarea {
 }
 .contact__row:hover {
   padding-inline-start: 0.4rem;
-  color: var(--forest);
+  color: var(--brand);
 }
 .contact__row .ci {
   width: 38px;
@@ -1777,7 +1783,7 @@ textarea {
   display: grid;
   place-items: center;
   flex: none;
-  color: var(--forest-deep);
+  color: var(--brand-deep);
 }
 .contact__row .ci svg {
   width: 18px;
@@ -1816,7 +1822,7 @@ textarea {
 .hours__title svg {
   width: 16px;
   height: 16px;
-  color: var(--forest);
+  color: var(--brand);
 }
 .hours ul {
   display: grid;
@@ -1908,9 +1914,9 @@ textarea {
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: var(--forest);
+  border-color: var(--brand);
   background: var(--surface);
-  box-shadow: 0 0 0 4px rgba(43, 66, 52, 0.1);
+  box-shadow: 0 0 0 4px rgba(20, 35, 75, 0.1);
 }
 .field input:invalid:not(:placeholder-shown) {
   border-color: #b4553a;
@@ -1934,8 +1940,8 @@ textarea {
   line-height: 1.8;
 }
 .form-status[data-state="ok"] {
-  background: var(--forest-soft);
-  color: var(--forest-deep);
+  background: var(--brand-soft);
+  color: var(--brand-deep);
 }
 .form-status[data-state="error"] {
   background: var(--clay-soft);
@@ -1955,9 +1961,6 @@ textarea {
   gap: var(--sp-5);
   padding-bottom: var(--sp-6);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.footer .brand__mark {
-  background: var(--paper);
 }
 .footer .brand__name {
   color: var(--paper-soft);
@@ -2026,16 +2029,16 @@ textarea {
   margin-bottom: var(--sp-3);
 }
 .footer__wordmark {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(3.2rem, 2rem + 9vw, 9rem);
-  line-height: 0.95;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.16);
-  text-align: center;
-  padding-top: var(--sp-4);
-  letter-spacing: 0.01em;
+  display: flex;
+  justify-content: center;
+  padding-top: var(--sp-6);
+  padding-bottom: var(--sp-2);
   user-select: none;
+}
+.footer__wordmark img {
+  width: clamp(230px, 30vw, 400px);
+  height: auto;
+  opacity: 0.14;
 }
 .footer__bottom {
   display: flex;
@@ -2170,6 +2173,15 @@ textarea {
   }
   .header__actions .btn {
     display: none;
+  }
+  .brand__logo {
+    height: 40px;
+  }
+  .brand__name {
+    font-size: 0.95rem;
+  }
+  .brand__sub {
+    font-size: 0.55rem;
   }
 
   .hero__inner {

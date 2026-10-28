@@ -7,7 +7,8 @@
   <meta name="description" content="اطلاعات ارائه‌دهندهٔ خدمات (Impressum) طبق § 5 DDG." />
   <meta name="robots" content="noindex, follow" />
   <meta name="theme-color" content="#f7f4ee" />
-  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <style>
     .legal { padding-block: clamp(2rem, 1.5rem + 4vw, 4.5rem); }
@@ -19,30 +20,28 @@
     .legal__body ul { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
     .legal__body li { font-size: 0.95rem; color: var(--muted); line-height: 1.9; padding-inline-start: 1rem; position: relative; }
     .legal__body li::before { content: "—"; position: absolute; inset-inline-start: 0; color: var(--line-strong); }
-    .legal__body a { color: var(--forest); border-bottom: 1px solid var(--line-strong); }
-    .legal__body a:hover { border-color: var(--forest); }
+    .legal__body a { color: var(--brand); border-bottom: 1px solid var(--line-strong); }
+    .legal__body a:hover { border-color: var(--brand); }
     .legal__box { border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: 1rem 1.25rem; background: rgba(255,255,255,0.5); font-size: 0.88rem; color: var(--muted); line-height: 1.95; }
     .legal__lang { font-size: 0.9rem; direction: ltr; text-align: left; }
     .legal code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sand); padding: 0.1em 0.4em; border-radius: 5px; font-size: 0.85em; direction: ltr; display: inline-block; }
-    .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 600; color: var(--forest); }
+    .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 600; color: var(--brand); }
     .back-link svg { width: 1em; height: 1em; transform: rotate(180deg); }
   </style>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
-    <symbol id="i-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7v10M3.6 9.6v4.8M17 7v10M20.4 9.6v4.8M7 12h10"/></symbol>
   </svg>
 
   <header class="header">
     <div class="container header__inner">
       <a class="brand" href="index.html" aria-label="بهنیا فیت — صفحهٔ اصلی">
-        <span class="brand__mark" aria-hidden="true">
-          <svg style="color:#f7f4ee"><use href="#i-logo"></use></svg>
-        </span>
+        <img class="brand__logo" src="assets/img/logo-mark.png" alt=""
+             width="395" height="228" aria-hidden="true" />
         <span class="brand__text">
           <span class="brand__name">بهنیا فیت</span>
-          <span class="brand__sub">PERSONAL TRAINING &amp; COACHING</span>
+          <span class="brand__sub">STRENGTH · FUNCTION · PERFORMANCE</span>
         </span>
       </a>
       <nav class="nav" aria-label="ناوبری">

@@ -8,8 +8,8 @@
   <meta name="author" content="Behnia Fit" />
   <meta name="theme-color" content="#f7f4ee" />
   <link rel="canonical" href="https://example.com/" />
-  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-  <link rel="apple-touch-icon" href="assets/img/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png" />
 
   <!-- Open Graph / شبکه‌های اجتماعی -->
   <meta property="og:type" content="website" />
@@ -17,7 +17,9 @@
   <meta property="og:site_name" content="بهنیا فیت" />
   <meta property="og:title" content="بهنیا فیت | مربی شخصی، کارشناس ارشد فیزیولوژی کاربردی" />
   <meta property="og:description" content="قوی‌تر شو، بدون حدس و گمان. کارشناس ارشد فیزیولوژی کاربردی، مربی رسمی فدراسیون، قهرمان فیتنس و ۵ سال سابقهٔ حرفه‌ای. حضوری و آنلاین." />
-  <meta property="og:image" content="assets/img/hero-studio.jpg" />
+  <meta property="og:image" content="assets/img/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
 
   <link rel="preload" as="font" type="font/woff2" href="assets/fonts/estedad-arabic-800.woff2" crossorigin />
@@ -89,7 +91,6 @@
     <symbol id="i-cert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11A1.5 1.5 0 0 1 19 4.5V15H5V4.5A1.5 1.5 0 0 1 6.5 3Z"/><path d="M8.5 7h7M8.5 10.3h4.5"/><circle cx="12" cy="17" r="3"/><path d="m10.1 19.4-.5 2.4 2.4-1.1 2.4 1.1-.5-2.4"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.5 8-10V5.5L12 2.5 4 5.5V12c0 6.5 8 10 8 10Z"/><path d="m8.8 11.8 2.2 2.2 4.2-4.4"/></symbol>
     <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8v.2"/></symbol>
-    <symbol id="i-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7v10M3.6 9.6v4.8M17 7v10M20.4 9.6v4.8M7 12h10"/></symbol>
   </svg>
 
   <a class="skip-link" href="#main">رفتن به محتوای اصلی</a>
@@ -98,12 +99,11 @@
   <header class="header" id="header">
     <div class="container header__inner">
       <a class="brand" href="#hero" aria-label="بهنیا فیت — صفحهٔ اصلی">
-        <span class="brand__mark" aria-hidden="true">
-          <svg style="color:#f7f4ee"><use href="#i-logo"></use></svg>
-        </span>
+        <img class="brand__logo" src="assets/img/logo-mark.png" alt=""
+             width="395" height="228" fetchpriority="high" aria-hidden="true" />
         <span class="brand__text">
           <span class="brand__name">بهنیا فیت</span>
-          <span class="brand__sub">PERSONAL TRAINING &amp; COACHING</span>
+          <span class="brand__sub">STRENGTH · FUNCTION · PERFORMANCE</span>
         </span>
       </a>
 
@@ -955,14 +955,10 @@
     <div class="container">
       <div class="footer__top">
         <div>
-          <a class="brand" href="#hero" aria-label="بهنیا فیت">
-            <span class="brand__mark" aria-hidden="true">
-              <svg style="color:#14150f"><use href="#i-logo"></use></svg>
-            </span>
-            <span class="brand__text">
-              <span class="brand__name">بهنیا فیت</span>
-              <span class="brand__sub">PERSONAL TRAINING &amp; COACHING</span>
-            </span>
+          <a class="brand brand--stacked" href="#hero" aria-label="بهنیا فیت — صفحهٔ اصلی">
+            <img class="brand__lockup" src="assets/img/logo-full-light.png"
+                 alt="بهنیا فیت — Strength · Function · Performance"
+                 width="522" height="339" loading="lazy" />
           </a>
           <p class="footer__about">
             کارشناس ارشد فیزیولوژی کاربردی، مربی رسمی فدراسیون و قهرمان فیتنس.
@@ -1015,7 +1011,9 @@
         </div>
       </div>
 
-      <div class="footer__wordmark" aria-hidden="true">BEHNIA&nbsp;FIT</div>
+      <div class="footer__wordmark" aria-hidden="true">
+        <img src="assets/img/logo-mark-light.png" alt="" width="395" height="228" loading="lazy" />
+      </div>
 
       <div class="footer__dedication">
         این وب‌سایت با احترام و قدردانی، برای مربی‌ای ساخته شده که یادمان داد
