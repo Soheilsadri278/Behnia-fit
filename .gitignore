@@ -8,3 +8,10 @@ Thumbs.db
 # وابستگی‌ها و خروجی بیلد (این پروژه build ندارد)
 node_modules/
 dist/
+
+# داده‌های اجرا — هرگز کامیت نمی‌شوند
+data/
+.env
+*.db
+*.db-wal
+*.db-shm
