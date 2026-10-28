@@ -76,8 +76,6 @@
 
   <script src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/js/app.js?v=1"></script>
   <script src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/js/account.js?v=1"></script>
-  <script>window.BF_CARD = <?php echo wp_json_encode( (string) apply_filters( 'bf_card_number', '' ) ); ?>;</script>
-  <script src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/js/card-note.js"></script>
-
+  <script src="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/js/card-note.js?v=1"></script>
 </body>
 </html>

@@ -1,13 +1,20 @@
 /**
  * شمارهٔ کارت را در مرحلهٔ پرداخت نشان می‌دهد.
  *
- * چرا جدا؟ فایل account.js عیناً همان نسخهٔ Node است و دست نمی‌خورد؛ آن
- * نسخه شمارهٔ کارت را در رابط کاربری نشان نمی‌داد و شاگرد باید از جای
- * دیگری می‌پرسید. این چند خط بیرون از آن فایل، همان جای خالی را پر می‌کند.
+ * چرا جدا؟ فایل account.js دست نمی‌خورد تا هر دو نسخهٔ سایت (Node و وردپرس)
+ * دقیقاً یک چیز را اجرا کنند. آن فایل شمارهٔ کارت را در رابط کاربری نشان
+ * نمی‌داد و شاگرد باید از جای دیگری می‌پرسید؛ این چند خط همان جای خالی را پر
+ * می‌کند و در هر دو نسخه یکسان کار می‌کند.
+ *
+ * منبع شماره: در وردپرس از window.BF_CARD (تنظیمات افزونه) و در نسخهٔ Node
+ * از /api/plans که همان مقدار را برمی‌گرداند.
  */
 (function () {
+  var host = document.getElementById("checkout");
+  if (!host) return;
+
   var card = String(window.BF_CARD || "").trim();
-  if (!card) return;
+  var asked = false;
 
   function esc(value) {
     return String(value)
@@ -18,6 +25,8 @@
   }
 
   function inject() {
+    if (!card) return;
+
     var box = document.getElementById("manualBox");
     if (!box || box.getAttribute("data-bf-card") === "1") return;
 
@@ -36,10 +45,31 @@
     box.setAttribute("data-bf-card", "1");
   }
 
-  var host = document.getElementById("checkout");
-  if (!host) return;
+  function ask() {
+    if (card || asked) return;
+    asked = true;
+
+    fetch("/api/plans", { credentials: "same-origin" })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (data) {
+        if (data && data.card) {
+          card = String(data.card).trim();
+          inject();
+        }
+      })
+      .catch(function () {
+        /* بی‌صدا رد می‌شویم؛ نبودن شماره نباید بقیهٔ صفحه را بشکند */
+      });
+  }
 
   // جعبهٔ پرداخت بعد از انتخاب پلن ساخته می‌شود، پس نگاهش می‌کنیم.
-  new MutationObserver(inject).observe(host, { childList: true, subtree: true });
+  new MutationObserver(function () {
+    inject();
+    ask();
+  }).observe(host, { childList: true, subtree: true });
+
   inject();
+  ask();
 })();

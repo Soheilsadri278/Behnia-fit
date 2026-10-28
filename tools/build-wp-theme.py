@@ -314,6 +314,7 @@ PLUGIN_ASSETS = [
     ("assets/js/app.js", "assets/js/app.js"),
     ("assets/js/account.js", "assets/js/account.js"),
     ("assets/js/admin.js", "assets/js/admin.js"),
+    ("assets/js/card-note.js", "assets/js/card-note.js"),
     ("assets/img/favicon.png", "assets/img/favicon.png"),
     ("assets/img/apple-touch-icon.png", "assets/img/apple-touch-icon.png"),
     ("assets/img/logo-mark.png", "assets/img/logo-mark.png"),
@@ -352,14 +353,6 @@ def localize_account_html(html, page):
         'href="privacy.html"',
         'href="<?php echo esc_url( bf_accounts_privacy_url() ); ?>"',
     )
-
-    if page == "account":
-        # شمارهٔ کارت را از تنظیمات می‌خوانیم و به همان اسکریپت کوچک می‌دهیم.
-        snippet = (
-            "  <script>window.BF_CARD = <?php echo wp_json_encode( (string) apply_filters( 'bf_card_number', '' ) ); ?>;</script>\n"
-            '  <script src="' + PLUGIN_URI + '/assets/js/card-note.js"></script>\n'
-        )
-        html = html.replace("</body>", snippet + "\n</body>")
 
     return html
 
