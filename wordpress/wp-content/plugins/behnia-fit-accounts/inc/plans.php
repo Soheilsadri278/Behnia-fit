@@ -124,10 +124,33 @@ function bf_price_text( $amount ) {
  * @return string
  */
 function bf_render_prices( $html ) {
-	if ( false === strpos( $html, 'data-bf-price' ) ) {
+	if ( ! is_string( $html ) || '' === $html ) {
 		return $html;
 	}
 
+	// این فیلتر روی هر صفحه‌ای صدا زده می‌شود؛ اگر صفحه قیمت ندارد، دست نمی‌زنیم.
+	if ( false === strpos( $html, 'plan__price' ) && false === strpos( $html, 'price-from' ) ) {
+		return $html;
+	}
+
+	// اگر قالب تازه باشد، عددها با data-bf-price نشانه خورده‌اند و دقیق‌تریم.
+	if ( false !== strpos( $html, 'data-bf-price' ) ) {
+		return bf_render_marked_prices( $html );
+	}
+
+	// قالب قدیمی (بدون نشانه): همان جای‌ها را از روی ساختار پیدا می‌کنیم.
+	// این مسیر عمداً وجود دارد تا تغییر قیمت فقط با به‌روزرسانی افزونه کار
+	// کند و کسی مجبور نشود پوسته را هم دوباره نصب کند.
+	return bf_render_plain_prices( $html );
+}
+
+/**
+ * نمایش قیمت با نشانه‌های data-bf-price (قالب تازه).
+ *
+ * @param string $html خروجی صفحه.
+ * @return string
+ */
+function bf_render_marked_prices( $html ) {
 	// ۱) جای عددهای مستقل (قیمت کارت‌ها و بخش خدمات)
 	$html = preg_replace_callback(
 		'#<(span|b|strong)([^>]*\sdata-bf-price="([a-z]+)"[^>]*)>(.*?)</\1>#s',
@@ -162,6 +185,113 @@ function bf_render_prices( $html ) {
 		$html
 	);
 }
+
+/**
+ * نام خدمت در بخش «خدمات» → کلید برنامه.
+ *
+ * @return array
+ */
+function bf_service_key_map() {
+	return array(
+		'تمرین شخصی حضوری'        => 'inperson',
+		'حضوری ۱:۱'               => 'inperson',
+		'کوچینگ آنلاین'           => 'online',
+		'برنامهٔ تمرینی اختصاصی'  => 'training',
+		'همراهی تغذیه'            => 'nutrition',
+	);
+}
+
+/**
+ * نمایش قیمت بدون نشانه — برای قالبی که data-bf-price ندارد.
+ *
+ * ساختار صفحه ثابت است و از index.html می‌آید، پس با همان شکل پیدا می‌شود:
+ *   • <article class="plan">   → <span class="amount">۴</span> و «· ۴ دلار»
+ *   • <article class="service"> → <span class="value">۳۰ <small>…</small>
+ *
+ * اگر قیمتی در تنظیمات نباشد، همان عدد نوشته‌شده در قالب دست‌نخورده می‌ماند.
+ *
+ * @param string $html خروجی صفحه.
+ * @return string
+ */
+function bf_render_plain_prices( $html ) {
+	// کارت‌های تعرفه — کلید از لینک خرید همان کارت خوانده می‌شود.
+	$html = preg_replace_callback(
+		'#<article class="plan[^"]*".*?</article>#s',
+		static function ( $m ) {
+			$block = $m[0];
+			if ( ! preg_match( '#plan=([a-z]+)#', $block, $key ) ) {
+				return $block;
+			}
+			$price = bf_plan_price( $key[1], 0 );
+			if ( $price <= 0 ) {
+				return $block;
+			}
+			$text = bf_price_text( $price );
+
+			$block = preg_replace(
+				'#(<span class="amount"[^>]*>)\s*[۰-۹٬٫]+\s*(</span>)#u',
+				'${1}' . $text . '${2}',
+				$block,
+				1
+			);
+
+			// متن دکمه: «خرید … · ۴ دلار»
+			return preg_replace(
+				'#(·\s*)[۰-۹٬٫]+(\s*دلار)#u',
+				'${1}' . $text . '${2}',
+				$block,
+				1
+			);
+		},
+		$html
+	);
+
+	// بخش خدمات — کلید از عنوان <h3> خوانده می‌شود.
+	$keys = bf_service_key_map();
+
+	return preg_replace_callback(
+		'#<article class="service".*?</article>#s',
+		static function ( $m ) use ( $keys ) {
+			$block = $m[0];
+			if ( ! preg_match( '#<h3>(.*?)</h3>#s', $block, $h ) ) {
+				return $block;
+			}
+			$name = trim( wp_strip_all_tags( $h[1] ) );
+			if ( ! isset( $keys[ $name ] ) ) {
+				return $block;
+			}
+			$price = bf_plan_price( $keys[ $name ], 0 );
+			if ( $price <= 0 ) {
+				return $block;
+			}
+
+			// قالب ممکن است عدد را ساده نوشته باشد یا داخل یک <span> دیگر؛ هر دو.
+			return preg_replace(
+				'#(<span class="value">\s*(?:<span>)?\s*)[۰-۹٬٫]+#u',
+				'${1}' . bf_price_text( $price ),
+				$block,
+				1
+			);
+		},
+		$html
+	);
+}
+
+/**
+ * بافر خروجی خود افزونه.
+ *
+ * قالب تازه خودش فیلتر bf_localize_html را صدا می‌زند، ولی اگر کسی پوسته را
+ * به‌روز نکرده باشد این بافر کار را انجام می‌دهد؛ پس تغییر قیمت فقط با
+ * به‌روزرسانی افزونه دیده می‌شود. اگر هر دو باشند، دو بار اجرا می‌شود و
+ * نتیجه همان است (مقدارها ثابت‌اند).
+ */
+function bf_prices_buffer_start() {
+	if ( is_admin() || is_feed() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return;
+	}
+	ob_start( 'bf_render_prices' );
+}
+add_action( 'template_redirect', 'bf_prices_buffer_start', 2 );
 add_filter( 'bf_localize_html', 'bf_render_prices' );
 
 /**

@@ -63,6 +63,10 @@ add_action(
 			delete_option( 'bf_plan_prices' );
 		}
 
+		// قیمت‌ها در HTML صفحه نوشته می‌شوند، پس اگر هاست کش صفحه داشته باشد
+		// کاربر تا انقضای کش عدد قدیمی را می‌بیند. بعد از ذخیره پاکش می‌کنیم.
+		bf_flush_page_caches();
+
 		$notice = 'saved';
 
 		$phone = isset( $_POST['bf_coach_phone'] ) ? bf_normalize_phone( wp_unslash( $_POST['bf_coach_phone'] ) ) : null;
@@ -115,6 +119,37 @@ add_action(
 );
 
 /** ظاهر صفحه */
+/**
+ * پاک‌کردن کش صفحه/شیء بعد از تغییر تنظیمات.
+ *
+ * روی هاست‌های ایرانی معمولاً LiteSpeed Cache یا WP Rocket نصب است و صفحه را
+ * کش می‌کند. بدون این، قیمت تازه تا انقضای کش دیده نمی‌شود. هر کدام نبود،
+ * بی‌صدا رد می‌شود.
+ */
+function bf_flush_page_caches() {
+	wp_cache_flush();
+
+	if ( function_exists( 'rocket_clean_domain' ) ) {
+		rocket_clean_domain();
+	}
+	if ( function_exists( 'w3tc_flush_all' ) ) {
+		w3tc_flush_all();
+	}
+	if ( function_exists( 'wp_cache_clear_cache' ) ) {
+		wp_cache_clear_cache();
+	}
+	if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+		sg_cachepress_purge_cache();
+	}
+	if ( function_exists( 'opcache_reset' ) ) {
+		@opcache_reset(); // phpcs:ignore
+	}
+
+	do_action( 'litespeed_purge_all' );
+	do_action( 'ce_action_cache_clean' );
+	do_action( 'cache_enabler_clear_complete_cache' );
+}
+
 function bf_settings_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
@@ -244,6 +279,16 @@ function bf_settings_page() {
 		<ul style="line-height:2">
 			<li>شاگردها: <strong><?php echo esc_html( (string) bf_students_total() ); ?></strong></li>
 			<li>سفارش‌های منتظر تایید: <strong><?php echo esc_html( (string) bf_pending_total() ); ?></strong></li>
+			<li>نسخهٔ افزونه: <code><?php echo esc_html( BF_ACCOUNTS_VERSION ); ?></code></li>
+			<li>قیمت‌های ذخیره‌شده:
+				<?php $saved_prices = bf_saved_prices(); ?>
+				<?php if ( $saved_prices ) : ?>
+					<strong><?php echo esc_html( implode( ' · ', array_map( 'bf_price_text', $saved_prices ) ) ); ?></strong>
+					(بقیه از پیش‌فرض می‌آید)
+				<?php else : ?>
+					<strong>همه پیش‌فرض</strong>
+				<?php endif; ?>
+			</li>
 			<li>جداول دیتابیس: <code><?php echo esc_html( bf_table( 'orders' ) ); ?></code> و چهار جدول دیگر</li>
 		</ul>
 	</div>
