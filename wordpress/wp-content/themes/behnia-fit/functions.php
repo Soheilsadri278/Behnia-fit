@@ -304,6 +304,10 @@ function bf_doc_canonical() {
  * ارجاع‌های SVG (#i-check و مانند آن) و #main دست‌نخورده می‌مانند.
  */
 function bf_localize_output( $html ) {
+	// قیمت‌ها در صفحه با افزونهٔ حساب کاربری عوض می‌شوند؛ اگر افزونه نباشد،
+	// همان عددهای نوشته‌شده در قالب می‌مانند.
+	$html = apply_filters( 'bf_localize_html', $html );
+
 	$account = esc_url( bf_account_url() );
 	$html    = str_replace( 'href="account.html', 'href="' . $account, $html );
 

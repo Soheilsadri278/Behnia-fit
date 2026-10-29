@@ -38,6 +38,31 @@ add_action(
 		update_option( 'bf_card_number', $card );
 		update_option( 'bf_trust_proxy', isset( $_POST['bf_trust_proxy'] ) ? 1 : 0 );
 
+		// قیمت‌ها: هر کلید فقط اگر عدد معتبر باشد ذخیره می‌شود، وگرنه پیش‌فرض
+		// می‌ماند. عدد صفر یعنی «همان پیش‌فرض».
+		$prices = array();
+		$posted = isset( $_POST['bf_price'] ) && is_array( $_POST['bf_price'] ) ? wp_unslash( $_POST['bf_price'] ) : array(); // phpcs:ignore
+		foreach ( bf_plan_defaults() as $plan ) {
+			$key = $plan['key'];
+			if ( ! isset( $posted[ $key ] ) ) {
+				continue;
+			}
+			$raw = trim( (string) $posted[ $key ] );
+			if ( false !== strpos( $raw, '-' ) ) {
+				continue; // عدد منفی معنی ندارد
+			}
+			$value = bf_price_text_from_fa( $raw );
+			if ( '' === $raw || $value <= 0 ) {
+				continue; // خالی یا نامعتبر → پیش‌فرض
+			}
+			$prices[ $key ] = min( round( $value, 2 ), 1000000 );
+		}
+		if ( $prices ) {
+			update_option( 'bf_plan_prices', $prices );
+		} else {
+			delete_option( 'bf_plan_prices' );
+		}
+
 		$notice = 'saved';
 
 		$phone = isset( $_POST['bf_coach_phone'] ) ? bf_normalize_phone( wp_unslash( $_POST['bf_coach_phone'] ) ) : null;
@@ -166,6 +191,36 @@ function bf_settings_page() {
 						<p class="description">این شماره در مرحلهٔ پرداخت به شاگرد نشان داده می‌شود.</p>
 					</td>
 				</tr>
+			</table>
+
+			<h2>قیمت برنامه‌ها</h2>
+			<p style="max-width:46rem">
+				قیمت‌ها به <strong>دلار</strong> است و همان‌جا روی صفحهٔ اصلی سایت و در
+				صفحهٔ خرید نشان داده می‌شود. اگر خانه‌ای را خالی بگذاری، قیمت پیش‌فرض
+				برمی‌گردد. سفارش‌هایی که قبلاً ثبت شده‌اند مبلغ خودشان را نگه می‌دارند.
+			</p>
+			<table class="form-table" role="presentation">
+				<?php foreach ( bf_plan_defaults() as $plan ) : ?>
+					<?php $current = bf_plan_price( $plan['key'], $plan['price_usd'] ); ?>
+					<tr>
+						<th scope="row">
+							<label for="bf_price_<?php echo esc_attr( $plan['key'] ); ?>">
+								<?php echo esc_html( $plan['title'] ); ?>
+							</label>
+						</th>
+						<td>
+							<input class="small-text" dir="ltr" type="text" inputmode="decimal"
+								id="bf_price_<?php echo esc_attr( $plan['key'] ); ?>"
+								name="bf_price[<?php echo esc_attr( $plan['key'] ); ?>]"
+								value="<?php echo esc_attr( (string) ( $current == (int) $current ? (int) $current : $current ) ); ?>" />
+							<span>دلار</span>
+							<p class="description">
+								روی سایت الان این‌طور دیده می‌شود:
+								<strong><?php echo esc_html( bf_price_text( $current ) ); ?> دلار</strong>
+							</p>
+						</td>
+					</tr>
+				<?php endforeach; ?>
 			</table>
 
 			<h2>پیشرفته</h2>

@@ -25,6 +25,7 @@ define( 'BF_ACCOUNTS_URI', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 
 require_once BF_ACCOUNTS_DIR . 'inc/db.php';
 require_once BF_ACCOUNTS_DIR . 'inc/auth.php';
+require_once BF_ACCOUNTS_DIR . 'inc/plans.php';
 require_once BF_ACCOUNTS_DIR . 'inc/upload.php';
 require_once BF_ACCOUNTS_DIR . 'inc/api.php';
 require_once BF_ACCOUNTS_DIR . 'inc/settings.php';

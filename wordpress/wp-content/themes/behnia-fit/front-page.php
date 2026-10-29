@@ -212,7 +212,7 @@ get_header();
             <div class="service__foot">
               <div class="price-from">
                 <span class="label">شروع از</span>
-                <span class="value">۳۰ <small>دلار / هر جلسه</small></span>
+                <span class="value"><span data-bf-price="inperson">۳۰</span> <small>دلار / هر جلسه</small></span>
               </div>
               <a class="link-arrow" href="#contact">رزرو جلسه <svg aria-hidden="true"><use href="#i-arrow"></use></svg></a>
             </div>
@@ -234,7 +234,7 @@ get_header();
             <div class="service__foot">
               <div class="price-from">
                 <span class="label">شروع از</span>
-                <span class="value">۱۵ <small>دلار / ماهانه</small></span>
+                <span class="value"><span data-bf-price="online">۱۵</span> <small>دلار / ماهانه</small></span>
               </div>
               <a class="link-arrow" href="#contact">شروع کنیم <svg aria-hidden="true"><use href="#i-arrow"></use></svg></a>
             </div>
@@ -256,7 +256,7 @@ get_header();
             <div class="service__foot">
               <div class="price-from">
                 <span class="label">قیمت</span>
-                <span class="value">۸ <small>دلار · یک‌بار پرداخت</small></span>
+                <span class="value"><span data-bf-price="training">۸</span> <small>دلار · یک‌بار پرداخت</small></span>
               </div>
               <a class="link-arrow" href="#contact">درخواست برنامه <svg aria-hidden="true"><use href="#i-arrow"></use></svg></a>
             </div>
@@ -278,7 +278,7 @@ get_header();
             <div class="service__foot">
               <div class="price-from">
                 <span class="label">قیمت</span>
-                <span class="value">۴ <small>دلار · یک‌بار پرداخت</small></span>
+                <span class="value"><span data-bf-price="nutrition">۴</span> <small>دلار · یک‌بار پرداخت</small></span>
               </div>
               <a class="link-arrow" href="#contact">اطلاعات بیشتر <svg aria-hidden="true"><use href="#i-arrow"></use></svg></a>
             </div>
@@ -513,7 +513,7 @@ get_header();
             <h3 class="plan__name">برنامهٔ تغذیه</h3>
             <p class="plan__desc">یک نقشهٔ غذایی ساده و شخصی، بدون گرسنگی و بدون حذف گروه غذایی.</p>
             <div class="plan__price">
-              <span class="amount">۴</span>
+              <span class="amount" data-bf-price="nutrition">۴</span>
               <span class="unit">دلار · یک‌بار پرداخت</span>
             </div>
             <ul class="plan__list">
@@ -523,7 +523,7 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> بدون مکمل اجباری</li>
               <li class="muted"><svg aria-hidden="true"><use href="#i-check"></use></svg> بدون پیگیری ماهانه</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="account.html?plan=nutrition">خرید برنامهٔ تغذیه · ۴ دلار</a>
+            <a class="btn btn--ghost btn--full" href="account.html?plan=nutrition" data-bf-price-label="nutrition">خرید برنامهٔ تغذیه · ۴ دلار</a>
           </article>
 
           <article class="plan plan--featured" data-reveal style="--delay:80ms">
@@ -531,7 +531,7 @@ get_header();
             <h3 class="plan__name">برنامهٔ تمرینی</h3>
             <p class="plan__desc">برنامهٔ کامل تمرین، نوشته‌شده برای بدن و تقویم خودِ تو.</p>
             <div class="plan__price">
-              <span class="amount">۸</span>
+              <span class="amount" data-bf-price="training">۸</span>
               <span class="unit">دلار · یک‌بار پرداخت</span>
             </div>
             <ul class="plan__list">
@@ -541,7 +541,7 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> یک بازبینی رایگان در پایان دوره</li>
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> مناسب شروع از صفر</li>
             </ul>
-            <a class="btn btn--light btn--full" href="account.html?plan=training">
+            <a class="btn btn--light btn--full" href="account.html?plan=training" data-bf-price-label="training">
               خرید برنامهٔ تمرینی · ۸ دلار
               <svg aria-hidden="true"><use href="#i-arrow"></use></svg>
             </a>
@@ -551,7 +551,7 @@ get_header();
             <h3 class="plan__name">کوچینگ آنلاین</h3>
             <p class="plan__desc">همراهی ماهانه با بازخورد و چت مستقیم؛ برای تغییر پایدار.</p>
             <div class="plan__price">
-              <span class="amount">۱۵</span>
+              <span class="amount" data-bf-price="online">۱۵</span>
               <span class="unit">دلار · ماهانه</span>
             </div>
             <ul class="plan__list">
@@ -561,14 +561,14 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> چت مستقیم با مربی</li>
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> همراهی تغذیه</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="account.html?plan=online">شروع کوچینگ آنلاین · ۱۵ دلار</a>
+            <a class="btn btn--ghost btn--full" href="account.html?plan=online" data-bf-price-label="online">شروع کوچینگ آنلاین · ۱۵ دلار</a>
           </article>
 
           <article class="plan" data-reveal style="--delay:240ms">
             <h3 class="plan__name">حضوری ۱:۱</h3>
             <p class="plan__desc">جلسهٔ اختصاصی با تمرکز روی فرم و شدت، برای بالاترین سرعت پیشرفت.</p>
             <div class="plan__price">
-              <span class="amount">۳۰</span>
+              <span class="amount" data-bf-price="inperson">۳۰</span>
               <span class="unit">دلار · هر جلسه</span>
             </div>
             <ul class="plan__list">
@@ -578,7 +578,7 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> برنامهٔ هفتگی روی گوشی</li>
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> جابه‌جایی جلسه تا ۲۴ ساعت قبل</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="account.html?plan=inperson">رزرو جلسهٔ حضوری · ۳۰ دلار</a>
+            <a class="btn btn--ghost btn--full" href="account.html?plan=inperson" data-bf-price-label="inperson">رزرو جلسهٔ حضوری · ۳۰ دلار</a>
           </article>
         </div>
 

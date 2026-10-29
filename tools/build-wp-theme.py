@@ -180,6 +180,77 @@ def localize_head(html):
 
 # ------------------------------------------------------------------ index
 
+def mark_prices(html):
+    """جای عددهای قیمت را در صفحهٔ اصلی نشانه‌گذاری می‌کند.
+
+    عددها در HTML نوشته شده‌اند (۴، ۸، ۱۵، ۳۰) و مربی باید بتواند از
+    پیشخوان عوضشان کند. اینجا هر عدد با data-bf-price="key" علامت می‌خورد
+    تا هنگام رندر با قیمت تنظیمات عوض شود. اگر افزونه غیرفعال باشد، همان
+    عدد نوشته‌شده می‌ماند؛ پس صفحه هرگز خالی یا صفر نمی‌شود.
+
+    دو جا قیمت هست:
+      * بخش خدمات  -> <span class="value">۳۰ <small>...</small></span>
+      * بخش تعرفه  -> <span class="amount">۴</span> و متن دکمه «... · ۴ دلار»
+    """
+    service_keys = {
+        "تمرین شخصی حضوری": "inperson",
+        "حضوری ۱:۱": "inperson",
+        "کوچینگ آنلاین": "online",
+        "برنامهٔ تمرینی اختصاصی": "training",
+        "همراهی تغذیه": "nutrition",
+    }
+
+    def mark_service(block):
+        m = re.search(r"<h3>(.*?)</h3>", block)
+        key = service_keys.get(m.group(1).strip()) if m else None
+        if not key:
+            return block
+        return re.sub(
+            r'<span class="value">([۰-۹]+)',
+            '<span class="value"><span data-bf-price="' + key + r'">\1</span>',
+            block,
+            count=1,
+        )
+
+    def mark_plan(block):
+        m = re.search(r"plan=([a-z]+)", block)
+        if not m:
+            return block
+        key = m.group(1)
+        block = re.sub(
+            r'<span class="amount">([۰-۹]+)</span>',
+            '<span class="amount" data-bf-price="' + key + r'">\1</span>',
+            block,
+            count=1,
+        )
+        # متن دکمه: «خرید ... · ۴ دلار»
+        #
+        # اینجا عمداً تگ اضافه نمی‌شود: .btn یک inline-flex با gap است و اگر
+        # عدد داخل <span> برود، هر سه تکه (متن، عدد، «دلار») آیتم فلکس جدا
+        # می‌شوند و بینشان فاصلهٔ 0.6rem می‌افتد — ظاهر دکمه عوض می‌شود. پس
+        # فقط خودِ لینک علامت می‌خورد و رندر، عدد را داخل متن عوض می‌کند.
+        return re.sub(
+            r'(<a\b[^>]*href="[^"]*plan=' + key + r'"[^>]*)>',
+            r'\1 data-bf-price-label="' + key + r'">',
+            block,
+            count=1,
+        )
+
+    html = re.sub(
+        r'<article class="service".*?</article>',
+        lambda mm: mark_service(mm.group(0)),
+        html,
+        flags=re.S,
+    )
+    html = re.sub(
+        r'<article class="plan[^"]*".*?</article>',
+        lambda mm: mark_plan(mm.group(0)),
+        html,
+        flags=re.S,
+    )
+    return html
+
+
 def build_from_index():
     lines = read("index.html").split("\n")
 
@@ -201,7 +272,7 @@ def build_from_index():
     # تا شروع <main>: این بازه منوی موبایل (#mobileMenu) را هم دربر می‌گیرد.
     # اگر به </header> ختم شود، دکمهٔ همبرگری چیزی برای باز کردن ندارد.
     inner_head = rewrite_assets("\n".join(lines[i_body + 1 : i_main]))
-    main_html = rewrite_assets("\n".join(lines[i_main : i_main_end + 1]))
+    main_html = mark_prices(rewrite_assets("\n".join(lines[i_main : i_main_end + 1])))
     tail_html = rewrite_assets(strip_asset_links("\n".join(lines[i_footer:i_script])))
 
     header_php = localize_head(

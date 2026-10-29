@@ -66,40 +66,12 @@ final class BF_Accounts_API {
 	 * با فیلتر bf_plans می‌شود از کد عوضش کرد.
 	 */
 	public static function plans() {
-		$plans = array(
-			array(
-				'key'         => 'nutrition',
-				'title'       => 'برنامهٔ تغذیه',
-				'description' => 'برنامهٔ غذایی متناسب با هدف و سبک زندگی تو',
-				'price_usd'   => 4,
-				'period'      => 'once',
-				'sort'        => 1,
-			),
-			array(
-				'key'         => 'training',
-				'title'       => 'برنامهٔ تمرینی',
-				'description' => 'برنامهٔ اختصاصی تمرین با اصلاح فرم و پیشرفت هفتگی',
-				'price_usd'   => 8,
-				'period'      => 'once',
-				'sort'        => 2,
-			),
-			array(
-				'key'         => 'online',
-				'title'       => 'کوچینگ آنلاین',
-				'description' => 'پیگیری کامل تمرین و تغذیه با بازبینی ماهانه',
-				'price_usd'   => 15,
-				'period'      => 'month',
-				'sort'        => 3,
-			),
-			array(
-				'key'         => 'inperson',
-				'title'       => 'تمرین حضوری ۱:۱',
-				'description' => 'جلسهٔ حضوری در کرج، مهرشهر با اصلاح فرم زنده',
-				'price_usd'   => 30,
-				'period'      => 'session',
-				'sort'        => 4,
-			),
-		);
+		$plans = bf_plan_defaults();
+
+		foreach ( $plans as $i => $plan ) {
+			$plans[ $i ]['price_usd'] = bf_plan_price( $plan['key'], $plan['price_usd'] );
+		}
+
 		return apply_filters( 'bf_plans', $plans );
 	}
 
@@ -376,7 +348,11 @@ final class BF_Accounts_API {
 
 		/* ---------------- دانلود فایل برنامه ---------------- */
 		if ( preg_match( '#^/api/files/([\w.-]+)$#', $path, $m ) && 'GET' === $method ) {
-			$need_user();
+			// این نشانی در تب تازهٔ مرورگر باز می‌شود (دکمهٔ «دیدن رسید»)، پس
+			// خطاها به‌جای JSON خام با یک صفحهٔ ساده و خوانا نشان داده می‌شوند.
+			if ( ! $user ) {
+				self::file_error( 401, 'برای دیدن این فایل باید وارد حساب شوی.' );
+			}
 			self::send_file( rawurldecode( $m[1] ), (int) $user->ID, $coach );
 		}
 
@@ -902,10 +878,10 @@ final class BF_Accounts_API {
 		if ( $row ) {
 			$program = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . bf_table( 'programs' ) . ' WHERE id = %d', (int) $row['program_id'] ), ARRAY_A ); // phpcs:ignore
 			if ( ! $program || ( ! $is_coach && (int) $program['user_id'] !== (int) $user_id ) ) {
-				self::fail( 403, 'به این فایل دسترسی نداری' );
+				self::file_error( 403, 'این فایل به حساب تو مربوط نیست.' );
 			}
 			if ( ! is_file( $path ) ) {
-				self::fail( 404, 'فایل روی سرور نیست' );
+				self::file_error( 404, 'فایل روی سرور نیست. با پشتیبانی هاست تماس بگیر.' );
 			}
 
 			self::stream( $path, $row['mime'], $row['original_name'], 'attachment' );
@@ -915,13 +891,13 @@ final class BF_Accounts_API {
 		$orders  = bf_table( 'orders' );
 		$order   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders} WHERE receipt_file = %s", $stored_name ), ARRAY_A ); // phpcs:ignore
 		if ( ! $order ) {
-			self::fail( 404, 'فایل پیدا نشد' );
+			self::file_error( 404, 'این فایل پیدا نشد. ممکن است حذف شده باشد یا نشانی آن کامل کپی نشده باشد.' );
 		}
 		if ( ! $is_coach && (int) $order['user_id'] !== (int) $user_id ) {
-			self::fail( 403, 'به این فایل دسترسی نداری' );
+			self::file_error( 403, 'این فایل به حساب تو مربوط نیست.' );
 		}
 		if ( ! is_file( $path ) ) {
-			self::fail( 404, 'فایل روی سرور نیست' );
+			self::file_error( 404, 'فایل روی سرور نیست. با پشتیبانی هاست تماس بگیر.' );
 		}
 
 		$ext  = strtolower( pathinfo( $stored_name, PATHINFO_EXTENSION ) );
@@ -932,6 +908,60 @@ final class BF_Accounts_API {
 			'رسید-سفارش-' . (int) $order['id'] . '.' . $ext,
 			'inline' // «دیدن رسید» باید تصویر را نشان بدهد، نه اینکه دانلودش کند
 		);
+	}
+
+	/**
+	 * خطای مسیر فایل، به شکل خوانا برای چشم آدم.
+	 *
+	 * دکمهٔ «دیدن رسید» نشانی فایل را در تب تازه باز می‌کند. آنجا JSON خام
+	 * («{"ok":false,...}») بدترین شکل پیام است؛ به‌جایش یک برگهٔ ساده با
+	 * عنوان روشن، متن فارسی و دکمهٔ بازگشت می‌فرستیم. اگر درخواست از یک
+	 * اسکریپت بیاید (Accept بدون text/html)، همان JSON قبلی برمی‌گردد تا
+	 * رفتار برنامه‌ای عوض نشود.
+	 *
+	 * @param int    $status  کد وضعیت.
+	 * @param string $message پیام فارسی.
+	 */
+	private static function file_error( $status, $message ) {
+		$accept = isset( $_SERVER['HTTP_ACCEPT'] ) ? (string) $_SERVER['HTTP_ACCEPT'] : '';
+		if ( false === strpos( $accept, 'text/html' ) ) {
+			self::fail( $status, $message );
+		}
+
+		status_header( $status );
+		nocache_headers();
+		header( 'Content-Type: text/html; charset=utf-8' );
+		header( 'X-Robots-Tag: noindex, nofollow' );
+
+		$back = esc_url( bf_account_url() );
+		$home = esc_url( home_url( '/' ) );
+		$safe = esc_html( $message );
+
+		$css = 'body{margin:0;min-height:100vh;display:grid;place-items:center;'
+			. 'background:#f7f4ee;color:#14234b;font-family:Tahoma,system-ui,sans-serif;padding:24px}'
+			. '.box{max-width:26rem;background:#fff;border:1px solid #e3dbcd;border-radius:16px;'
+			. 'padding:28px;text-align:center;box-shadow:0 12px 32px rgba(20,35,75,.06)}'
+			. '.icon{width:44px;height:44px;border-radius:50%;background:#f3efe4;color:#8a6d2f;'
+			. 'display:grid;place-items:center;margin:0 auto 14px;font-size:22px}'
+			. 'p{margin:0 0 20px;line-height:2;font-size:.95rem;color:#4a5568}'
+			. '.links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}'
+			. 'a{display:inline-block;padding:10px 20px;border-radius:999px;text-decoration:none;'
+			. 'font-size:.9rem;font-weight:600;border:1px solid #14234b}'
+			. '.main{background:#14234b;color:#f7f4ee}.alt{color:#14234b}';
+
+		echo "<!DOCTYPE html>\n<html lang=\"fa\" dir=\"rtl\">\n<head>\n"
+			. "<meta charset=\"utf-8\" />\n"
+			. "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n"
+			. "<meta name=\"robots\" content=\"noindex, nofollow\" />\n"
+			. '<title>' . $safe . "</title>\n<style>" . $css . "</style>\n</head>\n<body>\n"
+			. "<div class=\"box\">\n"
+			. "<div class=\"icon\">!</div>\n"
+			. '<p>' . $safe . "</p>\n"
+			. "<div class=\"links\">\n"
+			. '<a class="main" href="' . $back . '">برگشت به حساب من</a>' . "\n"
+			. '<a class="alt" href="' . $home . '">صفحهٔ اصلی</a>' . "\n"
+			. "</div>\n</div>\n</body>\n</html>";
+		exit;
 	}
 
 	/**
