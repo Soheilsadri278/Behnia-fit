@@ -3,7 +3,7 @@
  * Plugin Name:       بهنیا فیت — حساب کاربری
  * Plugin URI:        https://github.com/Soheilsadri278/Behnia-fit
  * Description:       حساب کاربری شاگردها و پنل مربی: ثبت‌نام با شمارهٔ موبایل، خرید برنامه با کارت‌به‌کارت، تایید پرداخت توسط مربی، و تحویل برنامهٔ تمرینی/تغذیه با جدول حرکت‌ها و فایل پیوست.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Behnia Fit
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BF_ACCOUNTS_VERSION', '1.1.0' );
+define( 'BF_ACCOUNTS_VERSION', '1.2.0' );
 define( 'BF_ACCOUNTS_FILE', __FILE__ );
 define( 'BF_ACCOUNTS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BF_ACCOUNTS_URI', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
@@ -26,6 +26,7 @@ define( 'BF_ACCOUNTS_URI', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 require_once BF_ACCOUNTS_DIR . 'inc/db.php';
 require_once BF_ACCOUNTS_DIR . 'inc/auth.php';
 require_once BF_ACCOUNTS_DIR . 'inc/plans.php';
+require_once BF_ACCOUNTS_DIR . 'inc/exchange.php';
 require_once BF_ACCOUNTS_DIR . 'inc/upload.php';
 require_once BF_ACCOUNTS_DIR . 'inc/api.php';
 require_once BF_ACCOUNTS_DIR . 'inc/settings.php';
@@ -57,6 +58,10 @@ final class BF_Accounts {
 		add_filter( 'bf_account_url', array( __CLASS__, 'account_url' ), 10, 1 );
 		add_filter( 'bf_card_number', array( __CLASS__, 'card_number' ) );
 		add_action( 'admin_init', array( __CLASS__, 'maybe_install' ) );
+		// به‌روزرسانی افزونه از راه بارگذاری زیپ، قلاب فعال‌سازی را صدا نمی‌زند؛
+		// پس مهاجرت جدول‌ها در اولین درخواست هم بررسی می‌شود تا ستون‌های تازه
+		// (مبلغ تومان و نرخ دلار) قبل از ثبت سفارش ساخته شده باشند.
+		add_action( 'init', array( __CLASS__, 'maybe_install' ), 0 );
 	}
 
 	/** فقط یک بار پس از فعال‌سازی جدول‌ها ساخته می‌شوند */
@@ -168,6 +173,7 @@ register_deactivation_hook(
 	BF_ACCOUNTS_FILE,
 	static function () {
 		// داده‌ها پاک نمی‌شوند: فقط با حذف واقعی افزونه از بین می‌روند.
+		wp_clear_scheduled_hook( 'bf_refresh_usd_toman_rate' );
 		wp_cache_flush();
 	}
 );

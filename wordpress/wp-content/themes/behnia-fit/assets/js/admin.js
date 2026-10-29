@@ -86,7 +86,7 @@ function renderOrders() {
         <div class="order-row__main">
           <div class="order-row__name">${esc(o.student_name)} <span style="font-weight:400;color:var(--muted);font-size:.78rem" dir="ltr">${esc(o.student_phone)}</span></div>
           <div class="order-row__sub">
-            ${esc(o.plan_title)} · $${faNum(o.amount_usd)} · ${esc(faDate(o.created_at))}
+            ${esc(o.plan_title)} · ${orderAmountText(o)} · ${esc(faDate(o.created_at))}
             ${o.receipt_file ? " · رسید ارسال شده" : ""}
           </div>
         </div>
@@ -174,7 +174,7 @@ function updateOrderOptions() {
     mine
       .map(
         (o) =>
-          `<option value="${o.id}">#${o.id} ${esc(o.plan_title)} — $${faNum(o.amount_usd)}</option>`
+          `<option value="${o.id}">#${o.id} ${esc(o.plan_title)} — ${orderAmountText(o)}</option>`
       )
       .join("");
 }

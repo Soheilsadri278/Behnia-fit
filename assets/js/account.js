@@ -106,7 +106,7 @@ function renderPlans() {
       <div class="plan" data-key="${esc(p.key)}">
         <div class="plan__top">
           <h3 class="plan__title">${esc(p.title)}</h3>
-          <div class="plan__price">$${faNum(p.price_usd)}<small>${period}</small></div>
+          <div class="plan__price">${planPriceText(p)}<small>${period}</small></div>
         </div>
         <p class="plan__desc">${esc(p.description || "")}</p>
         <button class="btn btn--ghost btn--small" type="button" data-pick="${esc(p.key)}">انتخاب و خرید</button>
@@ -141,7 +141,7 @@ function renderCheckout() {
   box.innerHTML = `
     <div class="plan__top" style="margin-bottom:.9rem">
       <h3 class="plan__title">${esc(PICKED.title)}</h3>
-      <div class="plan__price">$${faNum(PICKED.price_usd)}<small>${period}</small></div>
+      <div class="plan__price">${planPriceText(PICKED)}<small>${period}</small></div>
     </div>
     <div class="notice notice--info" style="margin-bottom:1rem">
       ${ICONS.info}
@@ -435,7 +435,7 @@ function renderOrders() {
         <div class="order-row__main">
           <div class="order-row__name">${esc(o.plan_title)}</div>
           <div class="order-row__sub">
-            $${faNum(o.amount_usd)} · ${esc(faDate(o.created_at))}
+            ${orderAmountText(o)} · ${esc(faDate(o.created_at))}
             · ${o.method === "zarinpal" ? "درگاه آنلاین" : "کارت‌به‌کارت"}
           </div>
         </div>

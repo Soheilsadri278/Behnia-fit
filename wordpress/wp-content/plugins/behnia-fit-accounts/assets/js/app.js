@@ -90,6 +90,32 @@ function faNum(n) {
   return String(n).replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
 }
 
+/** مبلغ تومانِ بدون اعشار، با جداکنندهٔ هزارگان فارسی */
+function faToman(n) {
+  const value = Math.round(Number(n) || 0);
+  if (!value) return "";
+  try {
+    return `${new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 }).format(value)} تومان`;
+  } catch {
+    return `${faNum(String(value).replace(/\B(?=(\d{3})+(?!\d))/g, "٬"))} تومان`;
+  }
+}
+
+/** قیمت نمایشی پلن؛ تومان اگر سرور فرستاده باشد، وگرنه دلار پایه */
+function planPriceText(plan) {
+  if (plan && Number(plan.price_toman) > 0) {
+    // والد این عدد برای قیمت دلاری چپ‌به‌راست است؛ مبلغ تومان باید راست‌به‌چپ بماند.
+    return `<span dir="rtl">${faToman(plan.price_toman)}</span>`;
+  }
+  return `$${faNum(plan ? plan.price_usd : 0)}`;
+}
+
+/** مبلغ نمایشی سفارش؛ مبلغ تومانیِ ذخیره‌شده در لحظهٔ ثبت سفارش */
+function orderAmountText(order) {
+  if (order && Number(order.amount_toman) > 0) return faToman(order.amount_toman);
+  return `$${faNum(order ? order.amount_usd : 0)}`;
+}
+
 /* ------------------------------------------------------------------ پیام */
 
 let toastTimer = null;

@@ -67,9 +67,12 @@ final class BF_Accounts_API {
 	 */
 	public static function plans() {
 		$plans = bf_plan_defaults();
+		$rate  = bf_usd_toman_rate();
 
 		foreach ( $plans as $i => $plan ) {
-			$plans[ $i ]['price_usd'] = bf_plan_price( $plan['key'], $plan['price_usd'] );
+			$plans[ $i ]['price_usd']      = bf_plan_price( $plan['key'], $plan['price_usd'] );
+			$plans[ $i ]['price_toman']    = $rate ? bf_usd_to_toman( $plans[ $i ]['price_usd'], $rate ) : 0;
+			$plans[ $i ]['usd_toman_rate'] = $rate ? (int) $rate['rate'] : 0;
 		}
 
 		return apply_filters( 'bf_plans', $plans );
@@ -240,6 +243,7 @@ final class BF_Accounts_API {
 			self::ok(
 				array(
 					'plans'    => array_values( self::plans() ),
+					'exchange' => bf_exchange_public(),
 					'zarinpal' => false,
 					'card'     => (string) apply_filters( 'bf_card_number', '' ),
 				)
@@ -258,24 +262,31 @@ final class BF_Accounts_API {
 				self::fail( 400, 'برنامهٔ انتخابی پیدا نشد' );
 			}
 
+			$rate = bf_usd_toman_rate();
+
 			$wpdb->insert(
 				bf_table( 'orders' ),
 				array(
-					'user_id'    => $user->ID,
-					'plan_key'   => $plan['key'],
-					'amount_usd' => $plan['price_usd'],
-					'status'     => 'pending',
+					'user_id'        => $user->ID,
+					'plan_key'       => $plan['key'],
+					'amount_usd'     => $plan['price_usd'],
+					'amount_toman'   => $rate ? bf_usd_to_toman( $plan['price_usd'], $rate ) : 0,
+					'usd_rate_toman' => $rate ? (int) $rate['rate'] : 0,
+					'status'         => 'pending',
 					'method'     => 'manual',
 					'note'       => mb_substr( isset( $body['note'] ) ? (string) $body['note'] : '', 0, 300 ),
 					'created_at' => gmdate( 'c' ),
 				),
-				array( '%d', '%s', '%f', '%s', '%s', '%s', '%s' )
+				array( '%d', '%s', '%f', '%d', '%d', '%s', '%s', '%s', '%s' )
 			);
 
 			self::ok(
 				array(
-					'orderId' => (int) $wpdb->insert_id,
-					'method'  => 'manual',
+					'orderId'       => (int) $wpdb->insert_id,
+					'method'        => 'manual',
+					'amountUsd'     => (float) $plan['price_usd'],
+					'amountToman'   => $rate ? bf_usd_to_toman( $plan['price_usd'], $rate ) : 0,
+					'exchangeRate'  => $rate ? (int) $rate['rate'] : 0,
 				)
 			);
 		}
@@ -553,6 +564,8 @@ final class BF_Accounts_API {
 				'user_id'      => (int) $row['user_id'],
 				'plan_key'     => $row['plan_key'],
 				'amount_usd'   => (float) $row['amount_usd'],
+				'amount_toman' => isset( $row['amount_toman'] ) ? (int) $row['amount_toman'] : 0,
+				'exchange_rate' => isset( $row['usd_rate_toman'] ) ? (int) $row['usd_rate_toman'] : 0,
 				'status'       => $row['status'],
 				'method'       => $row['method'],
 				'receipt_file' => $row['receipt_file'],
@@ -593,6 +606,8 @@ final class BF_Accounts_API {
 				'user_id'       => (int) $row['user_id'],
 				'plan_key'      => $row['plan_key'],
 				'amount_usd'    => (float) $row['amount_usd'],
+				'amount_toman'  => isset( $row['amount_toman'] ) ? (int) $row['amount_toman'] : 0,
+				'exchange_rate' => isset( $row['usd_rate_toman'] ) ? (int) $row['usd_rate_toman'] : 0,
 				'status'        => $row['status'],
 				'method'        => $row['method'],
 				'receipt_file'  => $row['receipt_file'],

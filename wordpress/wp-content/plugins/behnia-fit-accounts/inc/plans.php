@@ -113,6 +113,51 @@ function bf_price_text( $amount ) {
 }
 
 /**
+ * قیمت‌های پیش‌فرض به شکل key => دلار.
+ *
+ * برای رندر صفحه لازم است: اگر مربی هنوز قیمتی ذخیره نکرده، نباید عدد
+ * داخل قالب را به‌عنوان دلارِ تازه تفسیر کنیم، چون ممکن است همین تابع
+ * قبلاً آن را به تومان تبدیل کرده باشد.
+ */
+function bf_plan_default_usd_map() {
+	$out = array();
+	foreach ( bf_plan_defaults() as $plan ) {
+		$out[ $plan['key'] ] = (float) $plan['price_usd'];
+	}
+	return $out;
+}
+
+/**
+ * عدد نمایشی یک برنامه: تومان اگر نرخ داریم، وگرنه همان دلار پایه.
+ *
+ * @param string $key کلید برنامه.
+ * @param float  $fallback_usd قیمت دلاری جایگزین.
+ * @return float|int
+ */
+function bf_display_amount( $key, $fallback_usd ) {
+	$usd  = bf_plan_price( $key, $fallback_usd );
+	$rate = bf_usd_toman_rate();
+	return $rate ? bf_usd_to_toman( $usd, $rate ) : $usd;
+}
+
+/** واحدها و جملهٔ زیر قیمت‌ها را با واحد نمایشی هماهنگ می‌کند. */
+function bf_localize_price_units( $html ) {
+	if ( ! bf_usd_toman_rate() ) {
+		return $html;
+	}
+
+	$html = str_replace( '<span class="unit">دلار ·', '<span class="unit">تومان ·', $html );
+	$html = preg_replace( '#(<small>\s*)دلار(\s*[·/])#u', '$1تومان$2', $html );
+	$html = preg_replace(
+		'#همهٔ قیمت‌ها به\s*<strong([^>]*)>دلار آمریکا</strong>\s*است\.#u',
+		'قیمت‌ها بر اساس نرخ روز دلار محاسبه و به <strong$1>تومان</strong> نمایش داده می‌شوند.',
+		$html
+	);
+
+	return $html;
+}
+
+/**
  * جای خالی قیمت‌ها در HTML را پر می‌کند.
  *
  * صفحهٔ اصلی از همان index.html ساخته می‌شود و عددها داخلش نوشته شده‌اند
@@ -135,13 +180,13 @@ function bf_render_prices( $html ) {
 
 	// اگر قالب تازه باشد، عددها با data-bf-price نشانه خورده‌اند و دقیق‌تریم.
 	if ( false !== strpos( $html, 'data-bf-price' ) ) {
-		return bf_render_marked_prices( $html );
+		return bf_localize_price_units( bf_render_marked_prices( $html ) );
 	}
 
 	// قالب قدیمی (بدون نشانه): همان جای‌ها را از روی ساختار پیدا می‌کنیم.
 	// این مسیر عمداً وجود دارد تا تغییر قیمت فقط با به‌روزرسانی افزونه کار
 	// کند و کسی مجبور نشود پوسته را هم دوباره نصب کند.
-	return bf_render_plain_prices( $html );
+	return bf_localize_price_units( bf_render_plain_prices( $html ) );
 }
 
 /**
@@ -155,10 +200,21 @@ function bf_render_marked_prices( $html ) {
 	$html = preg_replace_callback(
 		'#<(span|b|strong)([^>]*\sdata-bf-price="([a-z]+)"[^>]*)>(.*?)</\1>#s',
 		static function ( $m ) {
-			$fallback = bf_price_text_from_fa( $m[4] );
-			$price    = bf_plan_price( $m[3], $fallback );
+			// این تابع ممکن است دو بار روی یک خروجی اجرا شود (فیلتر قالب و
+			// بافر افزونه). اگر قبلاً به تومان تبدیل شده، دوباره تبدیل نکن.
+			if ( false !== strpos( $m[2], 'data-bf-currency="IRT"' ) ) {
+				return $m[0];
+			}
 
-			return '<' . $m[1] . $m[2] . '>' . bf_price_text( $price ) . '</' . $m[1] . '>';
+			$defaults = bf_plan_default_usd_map();
+			$fallback = isset( $defaults[ $m[3] ] ) ? $defaults[ $m[3] ] : bf_price_text_from_fa( $m[4] );
+			$amount   = bf_display_amount( $m[3], $fallback );
+			$attrs    = $m[2];
+			if ( bf_usd_toman_rate() ) {
+				$attrs .= ' data-bf-currency="IRT"';
+			}
+
+			return '<' . $m[1] . $attrs . '>' . bf_price_text( $amount ) . '</' . $m[1] . '>';
 		},
 		$html
 	);
@@ -171,11 +227,16 @@ function bf_render_marked_prices( $html ) {
 		'#<a\b([^>]*\sdata-bf-price-label="([a-z]+)"[^>]*)>(.*?)</a>#s',
 		static function ( $m ) {
 			$inner = preg_replace_callback(
-				'#(·\s*)([۰-۹٬٫]+)(\s*دلار)#u',
+				'#(·\s*)([۰-۹٬٫]+)(\s*)(دلار|تومان)#u',
 				static function ( $n ) use ( $m ) {
-					$fallback = bf_price_text_from_fa( $n[2] );
-					$price    = bf_plan_price( $m[2], $fallback );
-					return $n[1] . bf_price_text( $price ) . $n[3];
+					if ( 'تومان' === $n[4] ) {
+						return $n[0];
+					}
+					$defaults = bf_plan_default_usd_map();
+					$fallback = isset( $defaults[ $m[2] ] ) ? $defaults[ $m[2] ] : bf_price_text_from_fa( $n[2] );
+					$amount   = bf_display_amount( $m[2], $fallback );
+					$unit     = bf_usd_toman_rate() ? 'تومان' : 'دلار';
+					return $n[1] . bf_price_text( $amount ) . $n[3] . $unit;
 				},
 				$m[3]
 			);
@@ -222,11 +283,14 @@ function bf_render_plain_prices( $html ) {
 			if ( ! preg_match( '#plan=([a-z]+)#', $block, $key ) ) {
 				return $block;
 			}
-			$price = bf_plan_price( $key[1], 0 );
+			$defaults = bf_plan_default_usd_map();
+			$fallback = isset( $defaults[ $key[1] ] ) ? $defaults[ $key[1] ] : 0;
+			$price    = bf_plan_price( $key[1], $fallback );
 			if ( $price <= 0 ) {
 				return $block;
 			}
-			$text = bf_price_text( $price );
+			$text = bf_price_text( bf_display_amount( $key[1], $fallback ) );
+			$unit = bf_usd_toman_rate() ? 'تومان' : 'دلار';
 
 			$block = preg_replace(
 				'#(<span class="amount"[^>]*>)\s*[۰-۹٬٫]+\s*(</span>)#u',
@@ -235,10 +299,10 @@ function bf_render_plain_prices( $html ) {
 				1
 			);
 
-			// متن دکمه: «خرید … · ۴ دلار»
+			// متن دکمه: «خرید … · ۱٬۰۸۴٬۷۶۰ تومان»
 			return preg_replace(
-				'#(·\s*)[۰-۹٬٫]+(\s*دلار)#u',
-				'${1}' . $text . '${2}',
+				'#(·\s*)[۰-۹٬٫]+\s*دلار#u',
+				'${1}' . $text . ' ' . $unit,
 				$block,
 				1
 			);
@@ -260,7 +324,9 @@ function bf_render_plain_prices( $html ) {
 			if ( ! isset( $keys[ $name ] ) ) {
 				return $block;
 			}
-			$price = bf_plan_price( $keys[ $name ], 0 );
+			$defaults = bf_plan_default_usd_map();
+			$fallback = isset( $defaults[ $keys[ $name ] ] ) ? $defaults[ $keys[ $name ] ] : 0;
+			$price    = bf_plan_price( $keys[ $name ], $fallback );
 			if ( $price <= 0 ) {
 				return $block;
 			}
@@ -268,7 +334,7 @@ function bf_render_plain_prices( $html ) {
 			// قالب ممکن است عدد را ساده نوشته باشد یا داخل یک <span> دیگر؛ هر دو.
 			return preg_replace(
 				'#(<span class="value">\s*(?:<span>)?\s*)[۰-۹٬٫]+#u',
-				'${1}' . bf_price_text( $price ),
+				'${1}' . bf_price_text( bf_display_amount( $keys[ $name ], $fallback ) ),
 				$block,
 				1
 			);

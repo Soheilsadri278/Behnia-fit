@@ -118,6 +118,37 @@ add_action(
 	}
 );
 
+/**
+ * به‌روزرسانی دستی نرخ دلار از صفحهٔ تنظیمات.
+ */
+add_action(
+	'admin_post_bf_refresh_usd_rate',
+	static function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی نداری.' );
+		}
+		check_admin_referer( 'bf_refresh_usd_rate' );
+
+		$rate = bf_refresh_usd_toman_rate();
+		if ( function_exists( 'bf_flush_page_caches' ) ) {
+			bf_flush_page_caches();
+		}
+
+		// اگر سرویس جواب نداده باشد، bf_refresh آخرین نرخ ذخیره‌شده را برمی‌گرداند؛
+		// آن را «به‌روزرسانی موفق» حساب نمی‌کنیم.
+		$fresh = $rate && empty( $rate['cached'] );
+
+		wp_safe_redirect(
+			add_query_arg(
+				'bf_msg',
+				$fresh ? 'rate_ok' : 'rate_fail',
+				admin_url( 'options-general.php?page=behnia-fit' )
+			)
+		);
+		exit;
+	}
+);
+
 /** ظاهر صفحه */
 /**
  * پاک‌کردن کش صفحه/شیء بعد از تغییر تنظیمات.
@@ -230,10 +261,32 @@ function bf_settings_page() {
 
 			<h2>قیمت برنامه‌ها</h2>
 			<p style="max-width:46rem">
-				قیمت‌ها به <strong>دلار</strong> است و همان‌جا روی صفحهٔ اصلی سایت و در
-				صفحهٔ خرید نشان داده می‌شود. اگر خانه‌ای را خالی بگذاری، قیمت پیش‌فرض
-				برمی‌گردد. سفارش‌هایی که قبلاً ثبت شده‌اند مبلغ خودشان را نگه می‌دارند.
+				قیمت پایه را اینجا به <strong>دلار</strong> وارد می‌کنی؛ سایت آن را با
+				نرخ روز دلار آزاد به <strong>تومانِ بدون اعشار</strong> تبدیل می‌کند و
+				همان مبلغ تومانی روی صفحهٔ اصلی و در صفحهٔ خرید نشان داده می‌شود.
+				اگر خانه‌ای را خالی بگذاری، قیمت پیش‌فرض برمی‌گردد. سفارش‌هایی که
+				قبلاً ثبت شده‌اند مبلغ خودشان را نگه می‌دارند؛ سفارش تازه مبلغ
+				تومانی و نرخ همان لحظه را ذخیره می‌کند.
 			</p>
+			<?php $bf_rate = bf_usd_toman_rate(); ?>
+			<?php if ( $bf_rate ) : ?>
+				<p style="max-width:46rem">
+					نرخ فعلی هر دلار:
+					<strong><?php echo esc_html( bf_toman_text( $bf_rate['rate'] ) ); ?></strong>
+					<?php if ( ! empty( $bf_rate['market_time'] ) ) : ?>
+						<span>— زمان بازار: <span dir="ltr"><?php echo esc_html( $bf_rate['market_time'] ); ?></span></span>
+					<?php endif; ?>
+					<?php if ( ! empty( $bf_rate['stale'] ) ) : ?>
+						<span>(آخرین نرخ موفق ذخیره‌شده)</span>
+					<?php endif; ?>
+					<?php $bf_refresh_url = wp_nonce_url( admin_url( 'admin-post.php?action=bf_refresh_usd_rate' ), 'bf_refresh_usd_rate' ); ?>
+					<a class="button" href="<?php echo esc_url( $bf_refresh_url ); ?>">به‌روزرسانی نرخ دلار</a>
+				</p>
+			<?php else : ?>
+				<div class="notice notice-warning inline" style="max-width:46rem">
+					<p>نرخ دلار هنوز دریافت نشده است. اتصال هاست به اینترنت را بررسی کن؛ تا وقتی نرخ نیاید، قیمت‌ها موقتاً دلاری نشان داده می‌شوند.</p>
+				</div>
+			<?php endif; ?>
 			<table class="form-table" role="presentation">
 				<?php foreach ( bf_plan_defaults() as $plan ) : ?>
 					<?php $current = bf_plan_price( $plan['key'], $plan['price_usd'] ); ?>
@@ -251,7 +304,11 @@ function bf_settings_page() {
 							<span>دلار</span>
 							<p class="description">
 								روی سایت الان این‌طور دیده می‌شود:
+								<?php if ( $bf_rate ) : ?>
+									<strong><?php echo esc_html( bf_toman_text( bf_usd_to_toman( $current, $bf_rate ) ) ); ?></strong>
+								<?php else : ?>
 								<strong><?php echo esc_html( bf_price_text( $current ) ); ?> دلار</strong>
+								<?php endif; ?>
 							</p>
 						</td>
 					</tr>
@@ -287,6 +344,17 @@ function bf_settings_page() {
 					(بقیه از پیش‌فرض می‌آید)
 				<?php else : ?>
 					<strong>همه پیش‌فرض</strong>
+				<?php endif; ?>
+			</li>
+			<li>نرخ دلار:
+				<?php $status_rate = bf_usd_toman_rate(); ?>
+				<?php if ( $status_rate ) : ?>
+					<strong><?php echo esc_html( bf_toman_text( $status_rate['rate'] ) ); ?></strong>
+					<?php if ( ! empty( $status_rate['market_time'] ) ) : ?>
+						<span>(<span dir="ltr"><?php echo esc_html( $status_rate['market_time'] ); ?></span>)</span>
+					<?php endif; ?>
+				<?php else : ?>
+					<strong>هنوز دریافت نشده</strong>
 				<?php endif; ?>
 			</li>
 			<li>جداول دیتابیس: <code><?php echo esc_html( bf_table( 'orders' ) ); ?></code> و چهار جدول دیگر</li>

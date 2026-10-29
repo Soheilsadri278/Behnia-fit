@@ -51,6 +51,8 @@ function bf_install_tables() {
 		user_id bigint(20) unsigned NOT NULL,
 		plan_key varchar(40) NOT NULL DEFAULT '',
 		amount_usd decimal(10,2) NOT NULL DEFAULT 0,
+		amount_toman bigint(20) unsigned NOT NULL DEFAULT 0,
+		usd_rate_toman bigint(20) unsigned NOT NULL DEFAULT 0,
 		status varchar(20) NOT NULL DEFAULT 'pending',
 		method varchar(20) NOT NULL DEFAULT 'manual',
 		receipt_file varchar(191) DEFAULT NULL,
