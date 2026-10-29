@@ -23,7 +23,7 @@
     .appbar{background:rgba(247,244,238,.92);border-bottom:1px solid #e3dbcd}
     .authwrap{max-width:27rem;margin-inline:auto}
   </style>
-  <link rel="stylesheet" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/css/style.css?v=10" />
+  <link rel="stylesheet" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/css/style.css?v=11" />
   <link rel="stylesheet" href="<?php echo esc_url( BF_ACCOUNTS_URI ); ?>/assets/css/app.css?v=4" />
 </head>
 <body>

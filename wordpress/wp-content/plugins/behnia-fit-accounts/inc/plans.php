@@ -222,6 +222,40 @@ function bf_localize_price_units( $html ) {
 }
 
 /**
+ * اصلاحیهٔ چیدمان کارت‌های قیمت برای مبلغ‌های تومانیِ طولانی.
+ *
+ * این CSS از داخل افزونه در <head> صفحهٔ اصلی گذاشته می‌شود تا اگر کسی
+ * فقط افزونه را به‌روز کرد و پوسته هنوز قدیمی بود، کارت‌های دسکتاپ با
+ * عددهای چندمیلیونی به‌هم نریزند. در قالب تازه همین قواعد داخل style.css
+ * هم هست و تکراری بودنشان ضرری ندارد.
+ */
+function bf_pricing_layout_fix( $html ) {
+	if ( false !== strpos( $html, 'bf-pricing-layout-fix' ) ) {
+		return $html;
+	}
+
+	$css = '.pricing__grid{grid-template-columns:repeat(4,minmax(0,1fr))}'
+		. '.services__grid{grid-template-columns:repeat(2,minmax(0,1fr))}'
+		. '.pricing__grid .plan{min-width:0;container-type:inline-size}'
+		. '.plan__price{min-width:0;width:100%}'
+		. '.plan__price .amount{font-size:clamp(1.35rem,.95rem + 1vw,1.95rem);line-height:1.15;letter-spacing:0;max-width:100%;min-width:0;overflow-wrap:anywhere}'
+		. '@supports(font-size:1cqw){.plan__price .amount{font-size:clamp(1.25rem,8.5cqw,2rem)}}'
+		. '.plan__price .unit{min-width:0}'
+		. '.plan .btn{min-width:0;max-width:100%;white-space:normal;text-align:center;overflow-wrap:break-word}'
+		. '@media(max-width:1120px){.pricing__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}'
+		. '@media(max-width:940px){.services__grid{grid-template-columns:minmax(0,1fr)}.pricing__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}'
+		. '@media(max-width:640px){.pricing__grid{grid-template-columns:minmax(0,1fr)}}';
+
+	$style = '<style id="bf-pricing-layout-fix">' . $css . '</style>';
+	$pos   = stripos( $html, '</head>' );
+	if ( false === $pos ) {
+		return $html;
+	}
+
+	return substr( $html, 0, $pos ) . $style . substr( $html, $pos );
+}
+
+/**
  * جای خالی قیمت‌ها در HTML را پر می‌کند.
  *
  * صفحهٔ اصلی از همان index.html ساخته می‌شود و عددها داخلش نوشته شده‌اند
@@ -244,13 +278,13 @@ function bf_render_prices( $html ) {
 
 	// اگر قالب تازه باشد، عددها با data-bf-price نشانه خورده‌اند و دقیق‌تریم.
 	if ( false !== strpos( $html, 'data-bf-price' ) ) {
-		return bf_localize_price_units( bf_render_marked_prices( $html ) );
+		return bf_pricing_layout_fix( bf_localize_price_units( bf_render_marked_prices( $html ) ) );
 	}
 
 	// قالب قدیمی (بدون نشانه): همان جای‌ها را از روی ساختار پیدا می‌کنیم.
 	// این مسیر عمداً وجود دارد تا تغییر قیمت فقط با به‌روزرسانی افزونه کار
 	// کند و کسی مجبور نشود پوسته را هم دوباره نصب کند.
-	return bf_localize_price_units( bf_render_plain_prices( $html ) );
+	return bf_pricing_layout_fix( bf_localize_price_units( bf_render_plain_prices( $html ) ) );
 }
 
 /**

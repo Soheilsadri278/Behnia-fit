@@ -1127,7 +1127,7 @@ textarea {
 /* 09. خدمات --------------------------------------------------------------- */
 .services__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(1rem, 0.6rem + 1.4vw, 1.75rem);
 }
 .service {
@@ -1555,19 +1555,25 @@ textarea {
 /* 13. قیمت‌ها ------------------------------------------------------------ */
 .pricing__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0,...) مهم است: عددهای تومانی و متن دکمه نباید ستون را هل بدهند */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(0.8rem, 0.4rem + 1vw, 1.25rem);
   align-items: stretch;
 }
 /* چهار ستون در عرض کم جا نمی‌شود: دو ستون */
 @media (max-width: 1120px) {
   .pricing__grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: 44rem;
     margin-inline: auto;
   }
 }
+.pricing__grid .plan {
+  /* عرض خود کارت مبنای اندازهٔ فونت مبلغ می‌شود (قیمت‌های تومانی طولانی) */
+  container-type: inline-size;
+}
 .plan {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -1601,21 +1607,34 @@ textarea {
   gap: 0.2rem 0.45rem;
   padding-block: var(--sp-3);
   border-block: 1px solid var(--line);
+  min-width: 0;
+  width: 100%;
   /* عدد و واحد در کارت‌های باریک زیر هم می‌آیند */
 }
 .plan__price .amount {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(1.9rem, 1.4rem + 1.1vw, 2.4rem);
-  line-height: 1;
-  letter-spacing: -0.01em;
+  /* مبلغ‌های تومان چندرقمی‌اند؛ فونت باید کوچک‌تر شود تا کارت دسکتاپ نشکند */
+  font-size: clamp(1.35rem, 0.95rem + 1vw, 1.95rem);
+  line-height: 1.15;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* در مرورگرهای جدید، فونت مبلغ با عرض همان کارت تنظیم می‌شود تا یک‌خطی بماند */
+@supports (font-size: 1cqw) {
+  .plan__price .amount {
+    font-size: clamp(1.25rem, 8.5cqw, 2rem);
+  }
 }
 .plan__price .unit {
   font-size: 0.78rem;
   line-height: 1.6;
   color: var(--muted);
   flex: 1 1 100%;
+  min-width: 0;
   margin-inline-start: 0;
 }
 .plan__list {
@@ -1642,6 +1661,12 @@ textarea {
 }
 .plan .btn {
   margin-top: var(--sp-2);
+  /* متن دکمه با مبلغ تومانی طولانی است؛ اگر لازم شد بشکند، نه اینکه کارت را هل بدهد */
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: break-word;
 }
 
 .plan--featured {
@@ -2287,7 +2312,7 @@ textarea {
   }
   /* چهار پلن: در تبلت دو ستون می‌ماند تا اسکرول طولانی نشود */
   .pricing__grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: 44rem;
   }
   .plan__desc {
@@ -2319,7 +2344,7 @@ textarea {
     display: none;
   }
   .pricing__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     max-width: 30rem;
     margin-inline: auto;
   }
