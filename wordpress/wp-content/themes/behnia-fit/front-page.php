@@ -523,7 +523,7 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> بدون مکمل اجباری</li>
               <li class="muted"><svg aria-hidden="true"><use href="#i-check"></use></svg> بدون پیگیری ماهانه</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="account.html?plan=nutrition" data-bf-price-label="nutrition">خرید برنامهٔ تغذیه · ۴ دلار</a>
+            <a class="btn btn--ghost btn--full" href="account.html?plan=nutrition">خرید برنامهٔ تغذیه</a>
           </article>
 
           <article class="plan plan--featured" data-reveal style="--delay:80ms">
@@ -541,8 +541,8 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> یک بازبینی رایگان در پایان دوره</li>
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> مناسب شروع از صفر</li>
             </ul>
-            <a class="btn btn--light btn--full" href="account.html?plan=training" data-bf-price-label="training">
-              خرید برنامهٔ تمرینی · ۸ دلار
+            <a class="btn btn--light btn--full" href="account.html?plan=training">
+              خرید برنامهٔ تمرینی
               <svg aria-hidden="true"><use href="#i-arrow"></use></svg>
             </a>
           </article>
@@ -561,7 +561,7 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> چت مستقیم با مربی</li>
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> همراهی تغذیه</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="account.html?plan=online" data-bf-price-label="online">شروع کوچینگ آنلاین · ۱۵ دلار</a>
+            <a class="btn btn--ghost btn--full" href="account.html?plan=online">شروع کوچینگ آنلاین</a>
           </article>
 
           <article class="plan" data-reveal style="--delay:240ms">
@@ -578,7 +578,7 @@ get_header();
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> برنامهٔ هفتگی روی گوشی</li>
               <li><svg aria-hidden="true"><use href="#i-check"></use></svg> جابه‌جایی جلسه تا ۲۴ ساعت قبل</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="account.html?plan=inperson" data-bf-price-label="inperson">رزرو جلسهٔ حضوری · ۳۰ دلار</a>
+            <a class="btn btn--ghost btn--full" href="account.html?plan=inperson">رزرو جلسهٔ حضوری</a>
           </article>
         </div>
 

@@ -278,13 +278,59 @@ function bf_render_prices( $html ) {
 
 	// اگر قالب تازه باشد، عددها با data-bf-price نشانه خورده‌اند و دقیق‌تریم.
 	if ( false !== strpos( $html, 'data-bf-price' ) ) {
-		return bf_pricing_layout_fix( bf_localize_price_units( bf_render_marked_prices( $html ) ) );
+		return bf_strip_plan_button_prices( bf_pricing_layout_fix( bf_localize_price_units( bf_render_marked_prices( $html ) ) ) );
 	}
 
 	// قالب قدیمی (بدون نشانه): همان جای‌ها را از روی ساختار پیدا می‌کنیم.
 	// این مسیر عمداً وجود دارد تا تغییر قیمت فقط با به‌روزرسانی افزونه کار
 	// کند و کسی مجبور نشود پوسته را هم دوباره نصب کند.
-	return bf_pricing_layout_fix( bf_localize_price_units( bf_render_plain_prices( $html ) ) );
+	return bf_strip_plan_button_prices( bf_pricing_layout_fix( bf_localize_price_units( bf_render_plain_prices( $html ) ) ) );
+}
+
+/**
+ * قیمت تکراری را از متن یک دکمه حذف می‌کند.
+ *
+ * قیمت باید فقط یک بار و درشت روی خود کارت دیده شود؛ تکرار همان مبلغ روی
+ * دکمه هم از نظر بصری شلوغ است و هم دکمه را بی‌دلیل بلند و چندخطی می‌کند.
+ * نمونه: «خرید برنامهٔ تغذیه · ۱٬۰۰۰٬۰۰۰ تومان» ← «خرید برنامهٔ تغذیه»
+ *
+ * @param string $inner محتوای داخل لینک.
+ * @return string
+ */
+function bf_button_text_without_price( $inner ) {
+	$clean = preg_replace(
+		'#\s*(?:·\s*)?[0-9۰-۹][0-9۰-۹٬,٫.]*\s*(?:دلار|تومان)\s*#u',
+		'',
+		$inner
+	);
+	return is_string( $clean ) ? $clean : $inner;
+}
+
+/**
+ * قیمت را از دکمهٔ همهٔ کارت‌های تعرفه پاک می‌کند.
+ *
+ * این پاک‌سازی در خروجی نهایی انجام می‌شود تا قالب‌های قدیمی هم فقط با
+ * به‌روزرسانی افزونه اصلاح شوند و نیازی به نصب دوبارهٔ پوسته نباشد.
+ *
+ * @param string $html خروجی صفحه.
+ * @return string
+ */
+function bf_strip_plan_button_prices( $html ) {
+	$clean = preg_replace_callback(
+		'#<article class="plan[^"]*".*?</article>#s',
+		static function ( $article ) {
+			$block = preg_replace_callback(
+				'#(<a\b[^>]*>)(.*?)(</a>)#s',
+				static function ( $a ) {
+					return $a[1] . bf_button_text_without_price( $a[2] ) . $a[3];
+				},
+				$article[0]
+			);
+			return is_string( $block ) ? $block : $article[0];
+		},
+		$html
+	);
+	return is_string( $clean ) ? $clean : $html;
 }
 
 /**
@@ -317,29 +363,14 @@ function bf_render_marked_prices( $html ) {
 		$html
 	);
 
-	// ۲) عددی که وسط متن دکمه نشسته: «خرید برنامهٔ تغذیه · ۴ دلار»
-	//
-	// دکمه inline-flex است و gap دارد؛ اگر عدد را تگ بپیچیم، فاصله می‌افتد و
-	// ظاهر عوض می‌شود. پس فقط ارقام را در همان متن جایگزین می‌کنیم.
+	// ۲) قالب‌های قبلی روی دکمه هم قیمت داشتند («خرید … · ۴ دلار»). قیمت
+	// فقط روی خود کارت می‌ماند، پس پسوند مبلغ از متن دکمه پاک می‌شود و
+	// نشانهٔ قدیمی دکمه هم از HTML برداشته می‌شود.
 	return preg_replace_callback(
-		'#<a\b([^>]*\sdata-bf-price-label="([a-z]+)"[^>]*)>(.*?)</a>#s',
+		'#<a\b([^>]*\sdata-bf-price-label="[a-z]+"[^>]*)>(.*?)</a>#s',
 		static function ( $m ) {
-			$inner = preg_replace_callback(
-				'#(·\s*)([۰-۹٬٫]+)(\s*)(دلار|تومان)#u',
-				static function ( $n ) use ( $m ) {
-					if ( 'تومان' === $n[4] ) {
-						return $n[0];
-					}
-					$defaults = bf_plan_default_usd_map();
-					$fallback = isset( $defaults[ $m[2] ] ) ? $defaults[ $m[2] ] : bf_price_text_from_fa( $n[2] );
-					$amount   = bf_display_amount( $m[2], $fallback );
-					$unit     = bf_display_is_toman( $m[2] ) ? 'تومان' : 'دلار';
-					return $n[1] . bf_price_text( $amount ) . $n[3] . $unit;
-				},
-				$m[3]
-			);
-
-			return '<a' . $m[1] . '>' . $inner . '</a>';
+			$attrs = preg_replace( '#\sdata-bf-price-label="[a-z]+"#', '', $m[1] );
+			return '<a' . ( is_string( $attrs ) ? $attrs : $m[1] ) . '>' . bf_button_text_without_price( $m[2] ) . '</a>';
 		},
 		$html
 	);
@@ -364,8 +395,11 @@ function bf_service_key_map() {
  * نمایش قیمت بدون نشانه — برای قالبی که data-bf-price ندارد.
  *
  * ساختار صفحه ثابت است و از index.html می‌آید، پس با همان شکل پیدا می‌شود:
- *   • <article class="plan">   → <span class="amount">۴</span> و «· ۴ دلار»
+ *   • <article class="plan">   → <span class="amount">۴</span>
  *   • <article class="service"> → <span class="value">۳۰ <small>…</small>
+ *
+ * قیمت روی دکمهٔ کارت تکرار نمی‌شود؛ پاک‌سازی دکمه‌ها در bf_render_prices
+ * روی خروجی نهایی انجام می‌شود.
  *
  * اگر قیمتی در تنظیمات نباشد، همان عدد نوشته‌شده در قالب دست‌نخورده می‌ماند.
  *
@@ -388,22 +422,16 @@ function bf_render_plain_prices( $html ) {
 				return $block;
 			}
 			$text = bf_price_text( bf_display_amount( $key[1], $fallback ) );
-			$unit = bf_display_is_toman( $key[1] ) ? 'تومان' : 'دلار';
 
+			// فقط مبلغ روی خود کارت عوض می‌شود؛ قیمتِ روی دکمه در مرحلهٔ
+			// نهایی حذف خواهد شد تا مبلغ دو بار روی یک کارت دیده نشود.
 			$block = preg_replace(
 				'#(<span class="amount"[^>]*>)\s*[۰-۹٬٫]+\s*(</span>)#u',
 				'${1}' . $text . '${2}',
 				$block,
 				1
 			);
-
-			// متن دکمه: «خرید … · ۱٬۰۸۴٬۷۶۰ تومان»
-			return preg_replace(
-				'#(·\s*)[۰-۹٬٫]+\s*دلار#u',
-				'${1}' . $text . ' ' . $unit,
-				$block,
-				1
-			);
+			return is_string( $block ) ? $block : $m[0];
 		},
 		$html
 	);

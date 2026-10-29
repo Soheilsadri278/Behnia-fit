@@ -3,7 +3,7 @@
  * Plugin Name:       بهنیا فیت — حساب کاربری
  * Plugin URI:        https://github.com/Soheilsadri278/Behnia-fit
  * Description:       حساب کاربری شاگردها و پنل مربی: ثبت‌نام با شمارهٔ موبایل، خرید برنامه با کارت‌به‌کارت، تایید پرداخت توسط مربی، و تحویل برنامهٔ تمرینی/تغذیه با جدول حرکت‌ها و فایل پیوست.
- * Version:           1.3.1
+ * Version:           1.3.2
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Behnia Fit
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BF_ACCOUNTS_VERSION', '1.3.1' );
+define( 'BF_ACCOUNTS_VERSION', '1.3.2' );
 define( 'BF_ACCOUNTS_FILE', __FILE__ );
 define( 'BF_ACCOUNTS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BF_ACCOUNTS_URI', untrailingslashit( plugin_dir_url( __FILE__ ) ) );

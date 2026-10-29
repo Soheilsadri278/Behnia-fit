@@ -190,7 +190,8 @@ def mark_prices(html):
 
     دو جا قیمت هست:
       * بخش خدمات  -> <span class="value">۳۰ <small>...</small></span>
-      * بخش تعرفه  -> <span class="amount">۴</span> و متن دکمه «... · ۴ دلار»
+      * بخش تعرفه  -> <span class="amount">۴</span>
+      (قیمت روی دکمهٔ کارت تکرار نمی‌شود؛ دکمه فقط نام عمل را نشان می‌دهد.)
     """
     service_keys = {
         "تمرین شخصی حضوری": "inperson",
@@ -217,21 +218,9 @@ def mark_prices(html):
         if not m:
             return block
         key = m.group(1)
-        block = re.sub(
+        return re.sub(
             r'<span class="amount">([۰-۹]+)</span>',
             '<span class="amount" data-bf-price="' + key + r'">\1</span>',
-            block,
-            count=1,
-        )
-        # متن دکمه: «خرید ... · ۴ دلار»
-        #
-        # اینجا عمداً تگ اضافه نمی‌شود: .btn یک inline-flex با gap است و اگر
-        # عدد داخل <span> برود، هر سه تکه (متن، عدد، «دلار») آیتم فلکس جدا
-        # می‌شوند و بینشان فاصلهٔ 0.6rem می‌افتد — ظاهر دکمه عوض می‌شود. پس
-        # فقط خودِ لینک علامت می‌خورد و رندر، عدد را داخل متن عوض می‌کند.
-        return re.sub(
-            r'(<a\b[^>]*href="[^"]*plan=' + key + r'"[^>]*)>',
-            r'\1 data-bf-price-label="' + key + r'">',
             block,
             count=1,
         )
