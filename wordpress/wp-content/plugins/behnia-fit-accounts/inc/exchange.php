@@ -195,6 +195,12 @@ function bf_parse_usd_toman_rate( $payload ) {
 
 /** به‌روزرسانی اجباری نرخ؛ برای دکمهٔ تنظیمات و کرون. */
 function bf_refresh_usd_toman_rate() {
+	// در حالت قیمت‌گذاری دستی، تبدیل خودکار خاموش است و برای نرخ گرفتن
+	// بی‌دلیل به سرویس بیرونی درخواست نمی‌فرستیم.
+	if ( bf_manual_pricing_enabled() ) {
+		return bf_cached_usd_toman_rate();
+	}
+
 	$before = bf_cached_usd_toman_rate();
 	$after  = bf_usd_toman_rate( true );
 
@@ -225,8 +231,17 @@ function bf_usd_to_toman( $usd, $rate_data = null ) {
 	return (int) round( (float) $usd * (int) $rate_data['rate'] );
 }
 
-/** قیمت تومانی یک برنامه با کلیدش. */
+/** 
+ * قیمت تومانیِ مؤثر یک برنامه.
+ *
+ * در حالت دستی همان مبلغی است که مربی به تومان ثبت کرده و نرخ دلار در آن
+ * دخالت ندارد. در حالت خودکار، قیمت دلاری با نرخ روز تبدیل می‌شود.
+ */
 function bf_plan_price_toman( $key, $fallback_usd = 0 ) {
+	if ( bf_manual_pricing_enabled() ) {
+		return bf_saved_plan_toman( $key );
+	}
+
 	return bf_usd_to_toman( bf_plan_price( $key, $fallback_usd ) );
 }
 
@@ -237,6 +252,10 @@ function bf_toman_text( $amount ) {
 
 /** شکل عمومی نرخ برای پاسخ API. */
 function bf_exchange_public( $rate_data = null ) {
+	if ( bf_manual_pricing_enabled() ) {
+		return null;
+	}
+
 	if ( null === $rate_data ) {
 		$rate_data = bf_usd_toman_rate();
 	}

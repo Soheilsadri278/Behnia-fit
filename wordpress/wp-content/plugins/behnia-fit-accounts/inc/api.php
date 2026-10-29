@@ -66,13 +66,15 @@ final class BF_Accounts_API {
 	 * با فیلتر bf_plans می‌شود از کد عوضش کرد.
 	 */
 	public static function plans() {
-		$plans = bf_plan_defaults();
-		$rate  = bf_usd_toman_rate();
+		$plans  = bf_plan_defaults();
+		$manual = bf_manual_pricing_enabled();
+		$rate   = $manual ? null : bf_usd_toman_rate();
 
 		foreach ( $plans as $i => $plan ) {
 			$plans[ $i ]['price_usd']      = bf_plan_price( $plan['key'], $plan['price_usd'] );
-			$plans[ $i ]['price_toman']    = $rate ? bf_usd_to_toman( $plans[ $i ]['price_usd'], $rate ) : 0;
+			$plans[ $i ]['price_toman']    = bf_plan_price_toman( $plan['key'], $plans[ $i ]['price_usd'] );
 			$plans[ $i ]['usd_toman_rate'] = $rate ? (int) $rate['rate'] : 0;
+			$plans[ $i ]['pricing_mode']   = bf_pricing_mode();
 		}
 
 		return apply_filters( 'bf_plans', $plans );
@@ -242,8 +244,9 @@ final class BF_Accounts_API {
 		if ( '/api/plans' === $path && 'GET' === $method ) {
 			self::ok(
 				array(
-					'plans'    => array_values( self::plans() ),
-					'exchange' => bf_exchange_public(),
+					'plans'        => array_values( self::plans() ),
+					'pricing_mode' => bf_pricing_mode(),
+					'exchange'     => bf_exchange_public(),
 					'zarinpal' => false,
 					'card'     => (string) apply_filters( 'bf_card_number', '' ),
 				)
@@ -262,15 +265,21 @@ final class BF_Accounts_API {
 				self::fail( 400, 'برنامهٔ انتخابی پیدا نشد' );
 			}
 
-			$rate = bf_usd_toman_rate();
+			$manual       = bf_manual_pricing_enabled();
+			$rate         = $manual ? null : bf_usd_toman_rate();
+			$amount_toman = bf_plan_price_toman( $plan['key'], $plan['price_usd'] );
+			// در حالت دستی مبلغ دلاری برای سفارش معنا ندارد؛ فقط اگر هنوز
+			// قیمت تومانی ثبت نشده باشد، دلار پایه را به‌عنوان پشتیبان نگه
+			// می‌داریم تا مبلغ سفارش صفر نشود.
+			$amount_usd = $manual && $amount_toman > 0 ? 0 : (float) $plan['price_usd'];
 
 			$wpdb->insert(
 				bf_table( 'orders' ),
 				array(
 					'user_id'        => $user->ID,
 					'plan_key'       => $plan['key'],
-					'amount_usd'     => $plan['price_usd'],
-					'amount_toman'   => $rate ? bf_usd_to_toman( $plan['price_usd'], $rate ) : 0,
+					'amount_usd'     => $amount_usd,
+					'amount_toman'   => $amount_toman,
 					'usd_rate_toman' => $rate ? (int) $rate['rate'] : 0,
 					'status'         => 'pending',
 					'method'     => 'manual',
@@ -284,9 +293,10 @@ final class BF_Accounts_API {
 				array(
 					'orderId'       => (int) $wpdb->insert_id,
 					'method'        => 'manual',
-					'amountUsd'     => (float) $plan['price_usd'],
-					'amountToman'   => $rate ? bf_usd_to_toman( $plan['price_usd'], $rate ) : 0,
+					'amountUsd'     => $amount_usd,
+					'amountToman'   => $amount_toman,
 					'exchangeRate'  => $rate ? (int) $rate['rate'] : 0,
+					'pricingMode'   => bf_pricing_mode(),
 				)
 			);
 		}

@@ -38,30 +38,93 @@ add_action(
 		update_option( 'bf_card_number', $card );
 		update_option( 'bf_trust_proxy', isset( $_POST['bf_trust_proxy'] ) ? 1 : 0 );
 
-		// قیمت‌ها: هر کلید فقط اگر عدد معتبر باشد ذخیره می‌شود، وگرنه پیش‌فرض
-		// می‌ماند. عدد صفر یعنی «همان پیش‌فرض».
-		$prices = array();
-		$posted = isset( $_POST['bf_price'] ) && is_array( $_POST['bf_price'] ) ? wp_unslash( $_POST['bf_price'] ) : array(); // phpcs:ignore
-		foreach ( bf_plan_defaults() as $plan ) {
-			$key = $plan['key'];
-			if ( ! isset( $posted[ $key ] ) ) {
-				continue;
+		// حالت قیمت‌گذاری و قیمت‌ها.
+		//
+		// نکتهٔ مهم: قیمت‌های دلاری و تومانی در دو گزینهٔ جدا نگه داشته
+		// می‌شوند. وقتی مربی حالت را عوض می‌کند، عددهای داخل فرم هنوز با
+		// واحد حالت قبلی‌اند؛ پس در همان ذخیره خوانده نمی‌شوند تا مثلاً
+		// «۸ دلار» اشتباهی «۸ تومان» نشود.
+		$current_mode = bf_pricing_mode();
+		$posted_mode  = isset( $_POST['bf_pricing_mode'] ) ? sanitize_key( wp_unslash( $_POST['bf_pricing_mode'] ) ) : $current_mode; // phpcs:ignore
+		$posted_mode  = 'manual_toman' === $posted_mode ? 'manual_toman' : 'auto_usd';
+		$mode_changed = $posted_mode !== $current_mode;
+		$posted       = isset( $_POST['bf_price'] ) && is_array( $_POST['bf_price'] ) ? wp_unslash( $_POST['bf_price'] ) : array(); // phpcs:ignore
+
+		if ( $mode_changed ) {
+			if ( 'manual_toman' === $posted_mode ) {
+				// مبلغ‌های تومانی فعلی سایت نقطهٔ شروع حالت دستی می‌شوند،
+				// تا مربی از صفر شروع نکند. بعد از این، ثابت می‌مانند.
+				$rate           = bf_usd_toman_rate();
+				$manual_prices  = bf_saved_toman_prices();
+				foreach ( bf_plan_defaults() as $plan ) {
+					$key = $plan['key'];
+					if ( empty( $manual_prices[ $key ] ) && $rate ) {
+						$manual_prices[ $key ] = bf_usd_to_toman( bf_plan_price( $key, $plan['price_usd'] ), $rate );
+					}
+				}
+				if ( $manual_prices ) {
+					update_option( 'bf_plan_prices_toman', $manual_prices );
+				} else {
+					delete_option( 'bf_plan_prices_toman' );
+				}
 			}
-			$raw = trim( (string) $posted[ $key ] );
-			if ( false !== strpos( $raw, '-' ) ) {
-				continue; // عدد منفی معنی ندارد
+			// برگشت به حالت خودکار: قیمت‌های دلاری قبلی دست‌نخورده می‌مانند.
+		} elseif ( 'manual_toman' === $posted_mode ) {
+			$manual_prices = bf_saved_toman_prices();
+			$cached_rate   = bf_cached_usd_toman_rate();
+
+			foreach ( bf_plan_defaults() as $plan ) {
+				$key = $plan['key'];
+				if ( ! isset( $posted[ $key ] ) ) {
+					continue;
+				}
+				$raw   = trim( (string) $posted[ $key ] );
+				$value = bf_price_text_from_fa( $raw );
+
+				if ( '' === $raw || $value <= 0 || false !== strpos( $raw, '-' ) ) {
+					// خانهٔ خالی یعنی «هنوز دستی ثبت نشده»؛ اگر نرخ ذخیره‌شده
+					// داریم، مبلغ تبدیل‌شدهٔ فعلی به‌عنوان شروع ثابت می‌شود.
+					if ( empty( $manual_prices[ $key ] ) && $cached_rate ) {
+						$manual_prices[ $key ] = bf_usd_to_toman( bf_plan_price( $key, $plan['price_usd'] ), $cached_rate );
+					}
+					continue;
+				}
+
+				$manual_prices[ $key ] = (int) min( round( $value ), 1000000000000 );
 			}
-			$value = bf_price_text_from_fa( $raw );
-			if ( '' === $raw || $value <= 0 ) {
-				continue; // خالی یا نامعتبر → پیش‌فرض
+
+			if ( $manual_prices ) {
+				update_option( 'bf_plan_prices_toman', $manual_prices );
+			} else {
+				delete_option( 'bf_plan_prices_toman' );
 			}
-			$prices[ $key ] = min( round( $value, 2 ), 1000000 );
-		}
-		if ( $prices ) {
-			update_option( 'bf_plan_prices', $prices );
 		} else {
-			delete_option( 'bf_plan_prices' );
+			// قیمت‌های دلاری: هر کلید فقط اگر عدد معتبر باشد ذخیره می‌شود،
+			// وگرنه پیش‌فرض می‌ماند. عدد صفر یعنی «همان پیش‌فرض».
+			$prices = array();
+			foreach ( bf_plan_defaults() as $plan ) {
+				$key = $plan['key'];
+				if ( ! isset( $posted[ $key ] ) ) {
+					continue;
+				}
+				$raw = trim( (string) $posted[ $key ] );
+				if ( false !== strpos( $raw, '-' ) ) {
+					continue; // عدد منفی معنی ندارد
+				}
+				$value = bf_price_text_from_fa( $raw );
+				if ( '' === $raw || $value <= 0 ) {
+					continue; // خالی یا نامعتبر → پیش‌فرض
+				}
+				$prices[ $key ] = min( round( $value, 2 ), 1000000 );
+			}
+			if ( $prices ) {
+				update_option( 'bf_plan_prices', $prices );
+			} else {
+				delete_option( 'bf_plan_prices' );
+			}
 		}
+
+		update_option( 'bf_pricing_mode', $posted_mode );
 
 		// قیمت‌ها در HTML صفحه نوشته می‌شوند، پس اگر هاست کش صفحه داشته باشد
 		// کاربر تا انقضای کش عدد قدیمی را می‌بیند. بعد از ذخیره پاکش می‌کنیم.
@@ -260,36 +323,72 @@ function bf_settings_page() {
 			</table>
 
 			<h2>قیمت برنامه‌ها</h2>
-			<p style="max-width:46rem">
-				قیمت پایه را اینجا به <strong>دلار</strong> وارد می‌کنی؛ سایت آن را با
-				نرخ روز دلار آزاد به <strong>تومانِ بدون اعشار</strong> تبدیل می‌کند و
-				همان مبلغ تومانی روی صفحهٔ اصلی و در صفحهٔ خرید نشان داده می‌شود.
-				اگر خانه‌ای را خالی بگذاری، قیمت پیش‌فرض برمی‌گردد. سفارش‌هایی که
-				قبلاً ثبت شده‌اند مبلغ خودشان را نگه می‌دارند؛ سفارش تازه مبلغ
-				تومانی و نرخ همان لحظه را ذخیره می‌کند.
-			</p>
-			<?php $bf_rate = bf_usd_toman_rate(); ?>
-			<?php if ( $bf_rate ) : ?>
+			<?php
+			$bf_pricing_mode = bf_pricing_mode();
+			$bf_manual       = 'manual_toman' === $bf_pricing_mode;
+			$bf_rate         = $bf_manual ? bf_cached_usd_toman_rate() : bf_usd_toman_rate();
+			?>
+			<fieldset style="max-width:46rem;margin:0 0 1rem">
+				<legend class="screen-reader-text">حالت قیمت‌گذاری</legend>
+				<label style="display:block;line-height:2">
+					<input type="radio" name="bf_pricing_mode" value="auto_usd" <?php checked( $bf_pricing_mode, 'auto_usd' ); ?> />
+					<strong>خودکار</strong> — قیمت را به دلار وارد می‌کنم و سایت با نرخ روز دلار به تومان تبدیل می‌کند.
+				</label>
+				<label style="display:block;line-height:2">
+					<input type="radio" name="bf_pricing_mode" value="manual_toman" <?php checked( $bf_pricing_mode, 'manual_toman' ); ?> />
+					<strong>دستی</strong> — تبدیل خودکار خاموش است و خودم قیمت نهایی را به تومان وارد می‌کنم.
+				</label>
+				<p class="description">
+					اگر حالت را عوض می‌کنی، اول فقط حالت را انتخاب کن و «ذخیرهٔ تنظیمات» را بزن؛
+					بعد صفحه با واحد همان حالت باز می‌شود و قیمت‌ها را ویرایش کن. در اولین رفتن به
+					حالت دستی، مبلغ‌های تومانی فعلی سایت برای شروع در خانه‌ها می‌نشینند و بعد از آن
+					ثابت می‌مانند تا خودت عوضشان کنی.
+				</p>
+			</fieldset>
+
+			<?php if ( $bf_manual ) : ?>
 				<p style="max-width:46rem">
-					نرخ فعلی هر دلار:
-					<strong><?php echo esc_html( bf_toman_text( $bf_rate['rate'] ) ); ?></strong>
-					<?php if ( ! empty( $bf_rate['market_time'] ) ) : ?>
-						<span>— زمان بازار: <span dir="ltr"><?php echo esc_html( $bf_rate['market_time'] ); ?></span></span>
-					<?php endif; ?>
-					<?php if ( ! empty( $bf_rate['stale'] ) ) : ?>
-						<span>(آخرین نرخ موفق ذخیره‌شده)</span>
-					<?php endif; ?>
-					<?php $bf_refresh_url = wp_nonce_url( admin_url( 'admin-post.php?action=bf_refresh_usd_rate' ), 'bf_refresh_usd_rate' ); ?>
-					<a class="button" href="<?php echo esc_url( $bf_refresh_url ); ?>">به‌روزرسانی نرخ دلار</a>
+					تبدیل خودکار <strong>خاموش</strong> است. عددهایی که اینجا به تومان وارد می‌کنی
+					دقیقاً همان‌هایی‌اند که روی سایت و در صفحهٔ خرید دیده می‌شوند و با بالا و پایین
+					شدن دلار تغییر نمی‌کنند. سفارش تازه همین مبلغ تومانی را ذخیره می‌کند.
 				</p>
 			<?php else : ?>
-				<div class="notice notice-warning inline" style="max-width:46rem">
-					<p>نرخ دلار هنوز دریافت نشده است. اتصال هاست به اینترنت را بررسی کن؛ تا وقتی نرخ نیاید، قیمت‌ها موقتاً دلاری نشان داده می‌شوند.</p>
-				</div>
+				<p style="max-width:46rem">
+					قیمت پایه را اینجا به <strong>دلار</strong> وارد می‌کنی؛ سایت آن را با
+					نرخ روز دلار آزاد به <strong>تومانِ بدون اعشار</strong> تبدیل می‌کند و
+					همان مبلغ تومانی روی صفحهٔ اصلی و در صفحهٔ خرید نشان داده می‌شود.
+					اگر خانه‌ای را خالی بگذاری، قیمت پیش‌فرض برمی‌گردد. سفارش‌هایی که
+					قبلاً ثبت شده‌اند مبلغ خودشان را نگه می‌دارند؛ سفارش تازه مبلغ
+					تومانی و نرخ همان لحظه را ذخیره می‌کند.
+				</p>
+				<?php if ( $bf_rate ) : ?>
+					<p style="max-width:46rem">
+						نرخ فعلی هر دلار:
+						<strong><?php echo esc_html( bf_toman_text( $bf_rate['rate'] ) ); ?></strong>
+						<?php if ( ! empty( $bf_rate['market_time'] ) ) : ?>
+							<span>— زمان بازار: <span dir="ltr"><?php echo esc_html( $bf_rate['market_time'] ); ?></span></span>
+						<?php endif; ?>
+						<?php if ( ! empty( $bf_rate['stale'] ) ) : ?>
+							<span>(آخرین نرخ موفق ذخیره‌شده)</span>
+						<?php endif; ?>
+						<?php $bf_refresh_url = wp_nonce_url( admin_url( 'admin-post.php?action=bf_refresh_usd_rate' ), 'bf_refresh_usd_rate' ); ?>
+						<a class="button" href="<?php echo esc_url( $bf_refresh_url ); ?>">به‌روزرسانی نرخ دلار</a>
+					</p>
+				<?php else : ?>
+					<div class="notice notice-warning inline" style="max-width:46rem">
+						<p>نرخ دلار هنوز دریافت نشده است. اتصال هاست به اینترنت را بررسی کن؛ تا وقتی نرخ نیاید، قیمت‌ها موقتاً دلاری نشان داده می‌شوند.</p>
+					</div>
+				<?php endif; ?>
 			<?php endif; ?>
+
 			<table class="form-table" role="presentation">
 				<?php foreach ( bf_plan_defaults() as $plan ) : ?>
-					<?php $current = bf_plan_price( $plan['key'], $plan['price_usd'] ); ?>
+					<?php
+					$current_usd   = bf_plan_price( $plan['key'], $plan['price_usd'] );
+					$saved_toman   = bf_saved_plan_toman( $plan['key'] );
+					$suggested     = $saved_toman ? $saved_toman : ( $bf_rate ? bf_usd_to_toman( $current_usd, $bf_rate ) : 0 );
+					$field_value   = $bf_manual ? ( $saved_toman ? (string) $saved_toman : '' ) : (string) ( $current_usd == (int) $current_usd ? (int) $current_usd : $current_usd );
+					?>
 					<tr>
 						<th scope="row">
 							<label for="bf_price_<?php echo esc_attr( $plan['key'] ); ?>">
@@ -297,17 +396,31 @@ function bf_settings_page() {
 							</label>
 						</th>
 						<td>
-							<input class="small-text" dir="ltr" type="text" inputmode="decimal"
+							<input class="small-text" dir="ltr" type="text" inputmode="<?php echo $bf_manual ? 'numeric' : 'decimal'; ?>"
+								style="<?php echo $bf_manual ? 'width:11rem' : ''; ?>"
 								id="bf_price_<?php echo esc_attr( $plan['key'] ); ?>"
 								name="bf_price[<?php echo esc_attr( $plan['key'] ); ?>]"
-								value="<?php echo esc_attr( (string) ( $current == (int) $current ? (int) $current : $current ) ); ?>" />
-							<span>دلار</span>
+								value="<?php echo esc_attr( $field_value ); ?>"
+								<?php if ( $bf_manual && ! $saved_toman && $suggested ) : ?>
+									placeholder="<?php echo esc_attr( (string) $suggested ); ?>"
+								<?php endif; ?> />
+							<span><?php echo $bf_manual ? 'تومان' : 'دلار'; ?></span>
 							<p class="description">
 								روی سایت الان این‌طور دیده می‌شود:
-								<?php if ( $bf_rate ) : ?>
-									<strong><?php echo esc_html( bf_toman_text( bf_usd_to_toman( $current, $bf_rate ) ) ); ?></strong>
+								<?php if ( $bf_manual ) : ?>
+									<?php if ( $saved_toman ) : ?>
+										<strong><?php echo esc_html( bf_toman_text( $saved_toman ) ); ?></strong>
+										<span>— ثابت می‌ماند و با دلار تغییر نمی‌کند.</span>
+									<?php elseif ( $suggested ) : ?>
+										<span>هنوز قیمت تومانی ثبت نشده است؛ مبلغ تبدیل‌شدهٔ فعلی برای شروع
+										<strong><?php echo esc_html( bf_toman_text( $suggested ) ); ?></strong> است.</span>
+									<?php else : ?>
+										<span>هنوز قیمت تومانی ثبت نشده است؛ مبلغ را به تومان وارد کن.</span>
+									<?php endif; ?>
+								<?php elseif ( $bf_rate ) : ?>
+									<strong><?php echo esc_html( bf_toman_text( bf_usd_to_toman( $current_usd, $bf_rate ) ) ); ?></strong>
 								<?php else : ?>
-								<strong><?php echo esc_html( bf_price_text( $current ) ); ?> دلار</strong>
+									<strong><?php echo esc_html( bf_price_text( $current_usd ) ); ?> دلار</strong>
 								<?php endif; ?>
 							</p>
 						</td>
@@ -337,24 +450,40 @@ function bf_settings_page() {
 			<li>شاگردها: <strong><?php echo esc_html( (string) bf_students_total() ); ?></strong></li>
 			<li>سفارش‌های منتظر تایید: <strong><?php echo esc_html( (string) bf_pending_total() ); ?></strong></li>
 			<li>نسخهٔ افزونه: <code><?php echo esc_html( BF_ACCOUNTS_VERSION ); ?></code></li>
+			<li>حالت قیمت‌گذاری:
+				<strong><?php echo bf_manual_pricing_enabled() ? 'دستی — تومان' : 'خودکار — دلار + نرخ روز'; ?></strong>
+			</li>
 			<li>قیمت‌های ذخیره‌شده:
-				<?php $saved_prices = bf_saved_prices(); ?>
-				<?php if ( $saved_prices ) : ?>
-					<strong><?php echo esc_html( implode( ' · ', array_map( 'bf_price_text', $saved_prices ) ) ); ?></strong>
-					(بقیه از پیش‌فرض می‌آید)
+				<?php if ( bf_manual_pricing_enabled() ) : ?>
+					<?php $saved_toman_prices = bf_saved_toman_prices(); ?>
+					<?php if ( $saved_toman_prices ) : ?>
+						<strong><?php echo esc_html( implode( ' · ', array_map( 'bf_toman_text', $saved_toman_prices ) ) ); ?></strong>
+					<?php else : ?>
+						<strong>هنوز قیمت تومانی ثبت نشده</strong>
+					<?php endif; ?>
 				<?php else : ?>
-					<strong>همه پیش‌فرض</strong>
+					<?php $saved_prices = bf_saved_prices(); ?>
+					<?php if ( $saved_prices ) : ?>
+						<strong><?php echo esc_html( implode( ' · ', array_map( 'bf_price_text', $saved_prices ) ) ); ?> دلار</strong>
+						(بقیه از پیش‌فرض می‌آید)
+					<?php else : ?>
+						<strong>همه پیش‌فرض</strong>
+					<?php endif; ?>
 				<?php endif; ?>
 			</li>
 			<li>نرخ دلار:
-				<?php $status_rate = bf_usd_toman_rate(); ?>
-				<?php if ( $status_rate ) : ?>
-					<strong><?php echo esc_html( bf_toman_text( $status_rate['rate'] ) ); ?></strong>
-					<?php if ( ! empty( $status_rate['market_time'] ) ) : ?>
-						<span>(<span dir="ltr"><?php echo esc_html( $status_rate['market_time'] ); ?></span>)</span>
-					<?php endif; ?>
+				<?php if ( bf_manual_pricing_enabled() ) : ?>
+					<strong>در حالت دستی استفاده نمی‌شود</strong>
 				<?php else : ?>
-					<strong>هنوز دریافت نشده</strong>
+					<?php $status_rate = bf_usd_toman_rate(); ?>
+					<?php if ( $status_rate ) : ?>
+						<strong><?php echo esc_html( bf_toman_text( $status_rate['rate'] ) ); ?></strong>
+						<?php if ( ! empty( $status_rate['market_time'] ) ) : ?>
+							<span>(<span dir="ltr"><?php echo esc_html( $status_rate['market_time'] ); ?></span>)</span>
+						<?php endif; ?>
+					<?php else : ?>
+						<strong>هنوز دریافت نشده</strong>
+					<?php endif; ?>
 				<?php endif; ?>
 			</li>
 			<li>جداول دیتابیس: <code><?php echo esc_html( bf_table( 'orders' ) ); ?></code> و چهار جدول دیگر</li>

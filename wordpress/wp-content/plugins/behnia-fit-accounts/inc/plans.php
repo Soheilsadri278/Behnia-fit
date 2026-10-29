@@ -63,6 +63,37 @@ function bf_saved_prices() {
 }
 
 /**
+ * حالت قیمت‌گذاری.
+ *
+ * auto_usd: مربی دلار وارد می‌کند و سایت با نرخ روز به تومان تبدیل می‌کند.
+ * manual_toman: تبدیل خودکار خاموش است و مربی خودش مبلغ تومان را وارد می‌کند.
+ */
+function bf_pricing_mode() {
+	$mode = get_option( 'bf_pricing_mode', 'auto_usd' );
+	return 'manual_toman' === $mode ? 'manual_toman' : 'auto_usd';
+}
+
+/** آیا مربی قیمت‌ها را دستی و به تومان وارد می‌کند؟ */
+function bf_manual_pricing_enabled() {
+	return 'manual_toman' === bf_pricing_mode();
+}
+
+/** قیمت‌های تومانیِ دستی به شکل key => تومان */
+function bf_saved_toman_prices() {
+	$saved = get_option( 'bf_plan_prices_toman', array() );
+	return is_array( $saved ) ? $saved : array();
+}
+
+/** قیمت دستی یک برنامه به تومان؛ صفر یعنی هنوز ثبت نشده است. */
+function bf_saved_plan_toman( $key ) {
+	$saved = bf_saved_toman_prices();
+	if ( isset( $saved[ $key ] ) && is_numeric( $saved[ $key ] ) && (float) $saved[ $key ] > 0 ) {
+		return (int) round( (float) $saved[ $key ] );
+	}
+	return 0;
+}
+
+/**
  * قیمت یک برنامه. اگر مربی عوض نکرده باشد، پیش‌فرض برمی‌گردد.
  *
  * @param string $key   کلید برنامه.
@@ -128,29 +159,62 @@ function bf_plan_default_usd_map() {
 }
 
 /**
- * عدد نمایشی یک برنامه: تومان اگر نرخ داریم، وگرنه همان دلار پایه.
+ * عدد نمایشی یک برنامه.
+ *
+ * در حالت دستی، فقط مبلغ تومانیِ ثبت‌شدهٔ مربی برمی‌گردد و هیچ تبدیلی
+ * انجام نمی‌شود. در حالت خودکار، دلار پایه با نرخ روز به تومان تبدیل
+ * می‌شود. اگر مبلغی در دسترس نباشد، دلار پایه می‌ماند تا صفحه بی‌قیمت نشود.
  *
  * @param string $key کلید برنامه.
  * @param float  $fallback_usd قیمت دلاری جایگزین.
  * @return float|int
  */
 function bf_display_amount( $key, $fallback_usd ) {
+	if ( bf_manual_pricing_enabled() ) {
+		$manual = bf_saved_plan_toman( $key );
+		if ( $manual > 0 ) {
+			return $manual;
+		}
+		return bf_plan_price( $key, $fallback_usd );
+	}
+
 	$usd  = bf_plan_price( $key, $fallback_usd );
 	$rate = bf_usd_toman_rate();
 	return $rate ? bf_usd_to_toman( $usd, $rate ) : $usd;
 }
 
+/**
+ * آیا مبلغ نمایشی فعلی تومان است؟
+ *
+ * @param string|null $key کلید برنامه؛ خالی یعنی «در مجموع صفحه».
+ * @return bool
+ */
+function bf_display_is_toman( $key = null ) {
+	if ( bf_manual_pricing_enabled() ) {
+		if ( null === $key ) {
+			return (bool) bf_saved_toman_prices();
+		}
+		return bf_saved_plan_toman( $key ) > 0;
+	}
+
+	return (bool) bf_usd_toman_rate();
+}
+
 /** واحدها و جملهٔ زیر قیمت‌ها را با واحد نمایشی هماهنگ می‌کند. */
 function bf_localize_price_units( $html ) {
-	if ( ! bf_usd_toman_rate() ) {
+	if ( ! bf_display_is_toman() ) {
 		return $html;
 	}
+
+	$note = bf_manual_pricing_enabled()
+		? 'قیمت‌ها به <strong$1>تومان</strong> است.'
+		: 'قیمت‌ها بر اساس نرخ روز دلار محاسبه و به <strong$1>تومان</strong> نمایش داده می‌شوند.';
 
 	$html = str_replace( '<span class="unit">دلار ·', '<span class="unit">تومان ·', $html );
 	$html = preg_replace( '#(<small>\s*)دلار(\s*[·/])#u', '$1تومان$2', $html );
 	$html = preg_replace(
 		'#همهٔ قیمت‌ها به\s*<strong([^>]*)>دلار آمریکا</strong>\s*است\.#u',
-		'قیمت‌ها بر اساس نرخ روز دلار محاسبه و به <strong$1>تومان</strong> نمایش داده می‌شوند.',
+		$note,
 		$html
 	);
 
@@ -210,7 +274,7 @@ function bf_render_marked_prices( $html ) {
 			$fallback = isset( $defaults[ $m[3] ] ) ? $defaults[ $m[3] ] : bf_price_text_from_fa( $m[4] );
 			$amount   = bf_display_amount( $m[3], $fallback );
 			$attrs    = $m[2];
-			if ( bf_usd_toman_rate() ) {
+			if ( bf_display_is_toman( $m[3] ) ) {
 				$attrs .= ' data-bf-currency="IRT"';
 			}
 
@@ -235,7 +299,7 @@ function bf_render_marked_prices( $html ) {
 					$defaults = bf_plan_default_usd_map();
 					$fallback = isset( $defaults[ $m[2] ] ) ? $defaults[ $m[2] ] : bf_price_text_from_fa( $n[2] );
 					$amount   = bf_display_amount( $m[2], $fallback );
-					$unit     = bf_usd_toman_rate() ? 'تومان' : 'دلار';
+					$unit     = bf_display_is_toman( $m[2] ) ? 'تومان' : 'دلار';
 					return $n[1] . bf_price_text( $amount ) . $n[3] . $unit;
 				},
 				$m[3]
@@ -290,7 +354,7 @@ function bf_render_plain_prices( $html ) {
 				return $block;
 			}
 			$text = bf_price_text( bf_display_amount( $key[1], $fallback ) );
-			$unit = bf_usd_toman_rate() ? 'تومان' : 'دلار';
+			$unit = bf_display_is_toman( $key[1] ) ? 'تومان' : 'دلار';
 
 			$block = preg_replace(
 				'#(<span class="amount"[^>]*>)\s*[۰-۹٬٫]+\s*(</span>)#u',
